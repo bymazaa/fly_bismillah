@@ -108,7 +108,7 @@ const BookingSchema = new Schema(
 
                 title: {
                     type: String,
-                    enum: ['mr', 'ms', 'mrs', 'miss', 'dr'],
+                    required:true
                 },
                 firstName: { type: String, trim: true },
                 lastName: { type: String, trim: true },
