@@ -43,7 +43,7 @@ const PackageSection = () => {
     }, []);
 
     return (
-        <section className="py-20 bg-gray-50">
+        <section className="py-20 bg-gray-50 ">
             <div className={layout.container}>
                 
                 {/* Header Section */}

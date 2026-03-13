@@ -7,8 +7,6 @@ import {
   FaStar,
   FaShieldAlt,
   FaHeadset,
-  FaUsers,
-  FaPlane,
   FaGlobeAsia,
   FaMosque,
   FaTag,
@@ -34,9 +32,9 @@ const Hero = () => {
   }, []);
 
   return (
-    <section className="relative w-full min-h-[90vh] flex flex-col bg-gray-950 overflow-hidden">
+    <section className="relative w-full min-h-[90vh] flex flex-col bg-gray-950">
       {/* ========== Background ========== */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 overflow-hidden">
         {sliderImages.map((img, i) => (
           <div
             key={i}
@@ -59,10 +57,10 @@ const Hero = () => {
 
       {/* ========== Content ========== */}
       <div
-        className={`relative z-10 w-full ${layout.container} flex flex-col items-center pt-10  pb-10 flex-1`}
+        className={`relative z-10 w-full ${layout.container} flex flex-col items-center pt-10 pb-10 flex-1`}
       >
-        {/* -------- Top: Title + Description (halka) -------- */}
-        <div className="text-center mb-6 md:mb-8 space-y-2">
+        {/* -------- Top: Title + Description -------- */}
+        <div className="text-center mb-6 md:mb-8 space-y-2 relative z-30">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-white/70 text-[11px] font-semibold uppercase tracking-widest mb-3">
             <MdFlightTakeoff className="text-rose-400" />
             Trusted by 10,000+ Travelers
@@ -81,14 +79,13 @@ const Hero = () => {
         </div>
 
         {/* -------- Middle: Search Form Card -------- */}
-        <div className="w-full max-w-6xl mb-8 md:mb-12">
+        <div className="w-full max-w-6xl mb-8 md:mb-12 relative z-[60]">
           <div className="relative">
             {/* Subtle glow */}
             <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-rose-500/20 via-orange-400/15 to-rose-500/20 blur-lg opacity-50" />
 
-            <div className="relative rounded-2xl bg-white shadow-2xl shadow-black/30 overflow-hidden">
-              {/* Top gradient line */}
-              <div className="h-1 bg-gradient-to-r from-rose-500 via-orange-400 to-amber-400" />
+            <div className="relative rounded-2xl bg-white shadow-2xl shadow-black/30">
+           
 
               {/* Form Header */}
               <div className="px-5 md:px-7 pt-5 pb-3 flex items-center gap-3 border-b border-gray-100">
@@ -114,7 +111,7 @@ const Hero = () => {
         </div>
 
         {/* -------- Bottom: Info Cards -------- */}
-        <div className="w-full max-w-5xl grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <div className="w-full max-w-5xl grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 relative z-10">
           {[
             {
               icon: <FaMosque className="text-lg" />,
@@ -169,7 +166,7 @@ const Hero = () => {
         </div>
 
         {/* -------- Trust Strip -------- */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-6 md:gap-10">
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-6 md:gap-10 relative z-10">
           <div className="flex items-center gap-2">
             <div className="flex -space-x-2">
               {[11, 12, 13, 14].map((id) => (
