@@ -282,19 +282,7 @@ interface RefundAPIData {
 
 const INITIATE_CARD_URL = "/api/duffel/booking/initiate-card";
 
-// ✅ ADDED — Title formatter
-const TITLE_MAP: Record<string, string> = {
-  mr: "Mr.",
-  ms: "Ms.",
-  mrs: "Mrs.",
-  miss: "Miss",
-  dr: "Dr.",
-};
 
-const formatTitle = (title?: string | null): string => {
-  if (!title) return "";
-  return TITLE_MAP[title.toLowerCase()] ?? title;
-};
 
 // ==========================================
 // 2. HELPER COMPONENTS
@@ -1363,7 +1351,7 @@ const openRefundModal = () => {
                               <span className="text-[13px] font-semibold text-gray-900">
                                 {p.title && (
                                   <span className="text-gray-500 font-medium mr-1">
-                                    {formatTitle(p.title)}
+                                    {p?.title.toUpperCase()}.
                                   </span>
                                 )}
                                 {p.fullName}

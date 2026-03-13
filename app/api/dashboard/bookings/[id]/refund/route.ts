@@ -175,8 +175,8 @@ export async function GET(
         // ── 8. Passengers summary ────────────────────────────────────────────
         const passengers = (order.passengers ?? []).map((p: any) => ({
             id:        p.id,
-            name:      `${p.title ? p.title + '. ' : ''}${p.given_name ?? ''} ${p.family_name ?? ''}`.trim(),
-            type:      p.type ?? 'adult',
+            name:      `${p.title ? p?.title?.toUpperCase() + '. ' : ''}${p.given_name ?? ''} ${p.family_name ?? ''}`.trim(),
+            type:      p.type ?? 'child',
             gender:    p.gender ?? null,
         }));
 

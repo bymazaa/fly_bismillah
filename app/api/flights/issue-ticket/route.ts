@@ -223,7 +223,7 @@ export async function POST(req: Request) {
 
 
 const clientPaid = `${booking.pricing?.total_amount} ${booking.pricing?.currency}`;
-const duffelPaid = `${order.base_amount} ${booking.pricing?.currency}`;
+const duffelPaid = `${order.total_amount} ${booking.pricing?.currency}`;
 const paymentMethod = booking.clientPayWith === 'stripe' ? 'Stripe Card' : 'Wallet Balance';
 const markupAmount = (booking.pricing?.markup || 0);
 
