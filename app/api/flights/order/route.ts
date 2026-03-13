@@ -1,4 +1,4 @@
-// app/api/duffel/booking/route.ts
+// app/api/flights/order/route.ts
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -451,7 +451,7 @@ function linkInfantsToAdults(
 }
 
 // ================================================================
-// POST /api/duffel/booking
+// POST /api/flights/booking
 // ================================================================
 
 export async function POST(request: NextRequest) {

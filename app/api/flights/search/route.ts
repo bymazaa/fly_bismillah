@@ -228,7 +228,7 @@ const mapOffer = (offer: any, cabinClass: string, tripType: string) => {
 };
 
 // ------------------------------------------------------------------
-// POST /api/duffel/search
+// POST /api/flights/search
 // ------------------------------------------------------------------
 
 export async function POST(req: NextRequest) {

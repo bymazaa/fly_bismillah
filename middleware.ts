@@ -29,12 +29,12 @@ const PROTECTED_API_ROUTES: RouteConfig[] = [
 
   // ── Staff [id] operations ──
   // NOTE: Longer paths MUST come before shorter ones (handled by findMatchingRoute sort, but kept ordered here for clarity)
-  { path: '/api/admin/staff/logout-all', roles: ['admin', 'editor', 'viewer'] },
-  { path: '/api/admin/staff/sessions', roles: ['admin', 'editor', 'viewer'] },
-  { path: '/api/admin/staff/unblock', roles: ['admin'] },
-  { path: '/api/admin/staff/delete', roles: ['admin'] },
-  { path: '/api/admin/staff/block', roles: ['admin'] },
-  { path: '/api/admin/staff/update', roles: ['admin', 'editor', 'viewer'] },
+  { path: '/api/admin/staff/:id/logout-all', roles: ['admin', 'editor', 'viewer'] },
+  { path: '/api/admin/staff/:id/sessions', roles: ['admin', 'editor', 'viewer'] },
+  { path: '/api/admin/staff/:id/unblock', roles: ['admin'] },
+  { path: '/api/admin/staff/:id/delete', roles: ['admin'] },
+  { path: '/api/admin/staff/:id/block', roles: ['admin'] },
+  { path: '/api/admin/staff/:id/update', roles: ['admin', 'editor', 'viewer'] },
   { path: '/api/admin/staff', roles: ['admin', 'editor', 'viewer'] }, // catch-all for staff — must come LAST
 
   // ── Profile (all authenticated roles) ──
@@ -47,21 +47,16 @@ const PROTECTED_API_ROUTES: RouteConfig[] = [
   // ── Logout (all authenticated roles) ──
   { path: '/api/auth/logout', roles: ['admin', 'editor', 'viewer'] },
 
-  // ── Session management (admin only) ──
-  { path: '/api/admin/sessions', roles: ['admin'] },
-
   // ── Activity log (admin sees all, others see own — enforced in controller) ──
   { path: '/api/admin/activity-log', roles: ['admin', 'editor', 'viewer'] },
 
   // ── Dashboard stats (all authenticated roles) ──
-  { path: '/api/dashboard/stats', roles: ['admin', 'editor', 'viewer'] },
+  { path: '/api/dashboard', roles: ['admin', 'editor', 'viewer'] },
 
   // ── Duffel flight search & booking (all authenticated roles) ──
-  { path: '/api/duffel', roles: ['admin', 'editor', 'viewer'] },
-  { path: '/api/flights', roles: ['admin', 'editor', 'viewer'] },
-
+ // { path: '/api/duffel', roles: ['admin', 'editor', 'viewer'] },
+  { path: '/api/flights/issue-ticket', roles: ['admin', 'editor'] },
   // ── Payments (admin and editor only — viewers cannot initiate payments) ──
-  { path: '/api/payment', roles: ['admin', 'editor'] },
   { path: '/api/stripe', roles: ['admin', 'editor'] },
 ];
 
@@ -73,7 +68,6 @@ const PUBLIC_API_ROUTES: string[] = [
   '/api/auth/reset-password',
   '/api/auth/verify',
   '/api/public',
-  '/api/cron',
   '/api/webhooks/stripe',  // Stripe webhook must be publicly accessible (signature verified inside handler)
   '/api/webhooks/duffel',  // Duffel webhook must be publicly accessible (signature verified inside handler)
 ];
