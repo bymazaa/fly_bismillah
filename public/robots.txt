@@ -1,0 +1,15 @@
+# Bismillah Travels & Tours
+User-agent: *
+Allow: /
+
+# Block admin/api routes
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/
+
+# Sitemaps
+Sitemap: https://flybismillah.com/sitemap.xml
+
+# Crawl delay
+User-agent: *
+Crawl-delay: 1

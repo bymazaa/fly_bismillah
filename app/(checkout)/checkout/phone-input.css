@@ -1,0 +1,58 @@
+/* app/(checkout)/checkout/phone-input.css */
+
+.PhoneInput {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    transition: all 0.2s;
+}
+
+.PhoneInput:focus-within {
+    border-color: #111827;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.06);
+}
+
+.PhoneInputInput {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1e293b;
+    flex: 1;
+}
+
+.PhoneInputCountry {
+    margin-right: 0.75rem;
+}
+
+.PhoneInput.input-error {
+    border-color: #ef4444;
+}
+
+.PhoneInput.input-error:focus-within {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* globals.css এ যোগ করো */
+
+/* ✅ Prevents iOS Safari auto-zoom on input focus */
+@media screen and (max-width: 768px) {
+    input,
+    select,
+    textarea,
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="password"],
+    input[type="date"],
+    input[type="search"] {
+        font-size: 16px !important;
+    }
+}
