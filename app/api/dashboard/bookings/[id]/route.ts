@@ -30,9 +30,8 @@ import { Duffel } from '@duffel/api';
 import mongoose from 'mongoose';
 import dbConnect from '@/connection/db';
 import Booking from '@/models/Booking.model';
-import { decrypt, getShortDateTime } from '../../../duffel/booking/utils';
 import { hasPermission } from '@/app/api/lib/auth';
-import { title } from 'process';
+import { decrypt, getShortDateTime } from '@/app/api/flights/utils/orders';
 
 const duffelToken = process.env.DUFFEL_ACCESS_TOKEN;
 const duffel = new Duffel({ token: duffelToken || '' });

@@ -29,7 +29,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/connection/db';
 import { hasPermission } from '../../lib/auth';
 import Booking from '@/models/Booking.model';
-import { decrypt } from '../../duffel/booking/utils';
+import { decrypt } from '../../flights/utils/orders';
 
 // ════════════════════════════════════════════════════════════════
 // ADMIN RATE LIMITER

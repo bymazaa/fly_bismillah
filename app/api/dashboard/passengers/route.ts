@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/connection/db';
 import Booking from '@/models/Booking.model';
-import { decrypt } from '../../duffel/booking/utils';
+import { decrypt } from '../../flights/utils/orders';
 
 // =============================================
 // ✅ Helper: Build the $match stage for search
