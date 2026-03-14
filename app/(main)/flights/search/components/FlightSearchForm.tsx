@@ -8,6 +8,7 @@ import { FaLayerGroup } from 'react-icons/fa';
 import OneWayForm from './OneWayForm';
 import RoundTripForm from './RoundTripForm';
 import MultiCityForm from './MultiCityForm';
+import { MdFlightTakeoff } from 'react-icons/md';
 
 // ------------------------------------------------------------------
 // Types
@@ -90,9 +91,12 @@ function FlightSearchFormInner() {
                 {/* Top row */}
                 <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center shadow-sm">
+                        {/* <div className="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center shadow-sm">
                             <Plane className="w-4 h-4 text-white -rotate-45" />
-                        </div>
+                        </div> */}
+                          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-rose-500 to-red-500 flex items-center justify-center shadow-md shadow-rose-500/20">
+                  <Plane className="text-white text-lg" />
+                </div>
                         <div>
                             <h3 className="text-sm md:text-[15px] font-bold text-gray-900 leading-tight">
                                 Search Flights

@@ -86,24 +86,8 @@ const Hero = () => {
 
             <div className="relative rounded-2xl bg-white shadow-2xl shadow-black/30">
            
-
-              {/* Form Header */}
-              <div className="px-5 md:px-7 pt-5 pb-3 flex items-center gap-3 border-b border-gray-100">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-rose-500 to-orange-500 flex items-center justify-center shadow-md shadow-rose-500/20">
-                  <MdFlightTakeoff className="text-white text-lg" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 text-base">
-                    Search Flights
-                  </h3>
-                  <p className="text-gray-400 text-xs">
-                    300+ airlines · Best prices
-                  </p>
-                </div>
-              </div>
-
               {/* Form Body */}
-              <div className="p-5 md:p-7">
+              <div className="p-2 md:p-7">
                 <FlightSearchForm />
               </div>
             </div>

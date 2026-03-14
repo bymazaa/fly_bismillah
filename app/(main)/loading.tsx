@@ -32,7 +32,7 @@ const page = () => {
 
             {/* Plane icon - pure CSS */}
             <svg
-              className="w-10 h-10 text-white drop-shadow-sm"
+              className="w-10 h-10 rotate-45 text-white drop-shadow-sm"
               viewBox="0 0 24 24"
               fill="currentColor"
             >

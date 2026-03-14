@@ -34,8 +34,8 @@ export const headerData = {
             hasDropdown: true,
             subMenu: [
                 { label: 'Flight Search ', href: '/flights/search' },
-                { label: 'Domestic Flight Booking', href: '/flight/domestic' },
-                { label: 'International Flight Booking', href: '/flight/international' },
+                { label: 'Domestic Flight Booking', href: '/flights/domestic' },
+                { label: 'International Flight Booking', href: '/flights/international' },
             ],
         },
         { label: 'Verify Ticket', href: '/order/status', hasDropdown: false, subMenu: null },

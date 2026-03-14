@@ -116,7 +116,7 @@ function buildEmailData(bookingDoc: any, order: any, dbDocs: any[]) {
 
     const passengers = (bookingDoc.passengers || []).map(
         (p: any) => ({
-            title: p.title || '',
+            title: p.title+"." || '',
             firstName: p.firstName || p.first_name || '',
             lastName: p.lastName || p.last_name || '',
             type: p.type || p.passenger_type || 'adult',
@@ -163,7 +163,7 @@ async function sendConfirmationEmails(
     try {
         const primary = booking.passengers?.[0];
         const passengerName = primary
-            ? `${primary.title || ''} ${primary.firstName || primary.first_name || ''} ${primary.lastName || primary.last_name || ''}`.trim()
+            ? `${primary.title+'.' || ''} ${primary.firstName || primary.first_name || ''} ${primary.lastName || primary.last_name || ''}`.trim()
             : 'Traveler';
 
         const pnr =
