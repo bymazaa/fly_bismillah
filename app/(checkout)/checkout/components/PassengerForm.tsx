@@ -140,7 +140,7 @@ const CustomDatePicker = ({
                     onChange={(e) => handleChange('month', e.target.value)}
                     onBlur={onBlur}
                     className={`${selectBase} px-3 pr-7 ${
-                        month ? 'text-gray-900' : 'text-gray-400'
+                        month ? 'text-gray-900' : 'text-gray-900'
                     }`}
                 >
                     <option value="" disabled>
@@ -165,7 +165,7 @@ const CustomDatePicker = ({
                     onChange={(e) => handleChange('day', e.target.value)}
                     onBlur={onBlur}
                     className={`${selectBase} px-2 pr-5 text-center ${
-                        day ? 'text-gray-900' : 'text-gray-400'
+                        day ? 'text-gray-900' : 'text-gray-900'
                     }`}
                 >
                     <option value="" disabled>
@@ -193,7 +193,7 @@ const CustomDatePicker = ({
                     onChange={(e) => handleChange('year', e.target.value)}
                     onBlur={onBlur}
                     className={`${selectBase} px-2 pr-6 text-center ${
-                        year ? 'text-gray-900' : 'text-gray-400'
+                        year ? 'text-gray-900' : 'text-gray-900'
                     }`}
                 >
                     <option value="" disabled>
