@@ -15,7 +15,7 @@ import { websiteDetails } from '@/constant/data';
 // Environment Variables
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL as string;
 // Assuming ADMIN_BUSINESS_EMAIL contains the domain (e.g., "themaza.shop")
-const ADMIN_BUSINESS_EMAIL = process.env.ADMIN_BUSINESS_EMAIL || 'themaza.shop';
+const ADMIN_BUSINESS_EMAIL = process.env.ADMIN_BUSINESS_EMAIL || 'flybismillah.com';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
