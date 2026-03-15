@@ -113,7 +113,7 @@ export async function sendContactSubmissionEmail(data: {
 }) {
     try {
         const { data: result, error } = await resend.emails.send({
-            from: `Fly Bismillah <onboarding@${ADMIN_BUSINESS_EMAIL}>`, // ✅ Updated
+            from: `Fly Bismillah <contact@${ADMIN_BUSINESS_EMAIL}>`, // ✅ Updated
             to: ADMIN_EMAIL,
             subject: `New Inquiry: ${data.subject}`,
             react: ContactSubmission({
@@ -146,7 +146,7 @@ interface SendEmailParams {
 export const sendEmailViaResend = async ({ to, subject, message, name }: SendEmailParams) => {
     try {
         const { data, error } = await resend.emails.send({
-            from: `Fly Bismillah <onboarding@${ADMIN_BUSINESS_EMAIL}>`, // ✅ Updated
+            from: `Fly Bismillah <contact@${ADMIN_BUSINESS_EMAIL}>`, // ✅ Updated
             to: [to],
             subject: subject,
             react: AdminMessageEmail({
@@ -186,7 +186,7 @@ export const sendBookingProcessingEmail = async ({
 }: ProcessingEmailParams) => {
     try {
         const { data, error } = await resend.emails.send({
-            from: `Fly Bismillah <onboarding@${ADMIN_BUSINESS_EMAIL}>`, // ✅ Updated
+            from: `Fly Bismillah <booking@${ADMIN_BUSINESS_EMAIL}>`, // ✅ Updated
             to: [to],
             subject: `Booking Processing - Ref: ${bookingReference}`,
             react: BookingProcessingEmail({
