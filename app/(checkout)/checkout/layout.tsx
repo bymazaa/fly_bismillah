@@ -6,15 +6,13 @@ import {
     MessageCircle,
     CheckCircle2,
     Headphones,
-    Mail,
 } from 'lucide-react';
 import '@/app/(main)/globals.css';
 import { websiteDetails } from '@/constant/data';
-import type { Metadata, Viewport } from 'next';  // 👈 Viewport added
+import type { Metadata, Viewport } from 'next';  
 import Link from 'next/link';
 import { Toaster } from 'sonner';
 
-// ✅ VIEWPORT CONFIG - Prevents mobile zoom on input focus
 export const viewport: Viewport = {
     width: 'device-width',
     initialScale: 1,
@@ -22,7 +20,8 @@ export const viewport: Viewport = {
     userScalable: false,
 };
 
-// 🟢 LIGHTWEIGHT SEO CONFIGURATION
+
+
 export const metadata: Metadata = {
     title: `Secure Checkout - ${websiteDetails.name}`,
     description:

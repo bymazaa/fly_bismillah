@@ -22,19 +22,21 @@ const greatVibes = Great_Vibes({
   display: "swap",
 });
 
+
+
 // ── Site Config ──
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://flybismillah.com";
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://flybismillah.com";
 const siteName = "Bismillah Travels & Tours";
 const sitePhone = websiteDetails.phone; 
-const siteEmail = "info@flybismillah.com"; 
+const siteEmail = websiteDetails.email; 
 const siteAddress = {
-  street: websiteDetails.address,
-  city: "Dhaka",
-  region: "Warren, Michigan ",
+  street: "27300 Van Dyke Ave",
+  city: "Warren",
+  region: "Michigan",
   country: "US",
-  zip: "48091",
-  lat: 42.4590,
-  lng: -83.0326,
+  zip: "48093",
+  lat: 42.5084,
+  lng: -83.0283,
 };
 
 // ── Viewport ──
@@ -45,7 +47,7 @@ export const viewport: Viewport = {
   ],
   width: "device-width",
   initialScale: 1,
-  maximumScale: 5,
+  maximumScale: 1,
   colorScheme: "light",
 };
 
@@ -278,10 +280,10 @@ const organizationSchema = {
     "Trusted travel agency in Bangladesh providing Hajj & Umrah packages, flight booking, hotel reservation, and visa processing services.",
   telephone: sitePhone,
   email: siteEmail,
-  foundingDate: "2020", // আপনার প্রতিষ্ঠানের শুরুর বছর
+  foundingDate: "2015", // আপনার প্রতিষ্ঠানের শুরুর বছর
   priceRange: "$$",
   currenciesAccepted: "BDT, USD",
-  paymentAccepted: "Cash, Bank Transfer, bKash, Nagad, Card",
+  paymentAccepted: "Cash, Bank Transfer, Card",
   openingHoursSpecification: [
     {
       "@type": "OpeningHoursSpecification",
@@ -322,9 +324,7 @@ const organizationSchema = {
     { "@type": "Country", name: "Saudi Arabia" },
   ],
   sameAs: [
-    "https://www.facebook.com/flybismillah", // আপনার Facebook
-    // "https://www.instagram.com/flybismillah",
-    // "https://www.youtube.com/@flybismillah",
+    "https://www.facebook.com/flybismillah", 
   ],
   hasOfferCatalog: {
     "@type": "OfferCatalog",
