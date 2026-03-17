@@ -197,22 +197,16 @@ function setSecurityHeaders(response: NextResponse): void {
     'Permissions-Policy',
     'camera=(), microphone=(), geolocation=(), interest-cohort=()'
   );
-  response.headers.set(
+ response.headers.set(
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      // Scripts: self + Duffel payments component (inline for Next.js)
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.duffel.com",
-      // Styles: self + inline (Tailwind/Duffel component styles)
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.duffel.com https://js.stripe.com",
       "style-src 'self' 'unsafe-inline' https://*.duffel.com",
-      // Images: self + airline logos + Duffel assets
       "img-src 'self' data: blob: https: http: https://pics.avs.io https://*.duffel.com https://assets.duffel.com",
-      // Fonts
       "font-src 'self' data: https://*.duffel.com",
-      // API connections: self + Duffel API
-      "connect-src 'self' https://api.duffel.com https://*.duffel.com",
-      // Iframes: Duffel payments 3DS iframe
-      "frame-src 'self' https://*.duffel.com https://api.duffel.com",
+      "connect-src 'self' https://api.duffel.com https://*.duffel.com https://api.stripe.com ws: wss:",
+      "frame-src 'self' https://*.duffel.com https://api.duffel.com https://js.stripe.com https://hooks.stripe.com",
       "base-uri 'self'",
       "form-action 'self'",
     ].join('; ')

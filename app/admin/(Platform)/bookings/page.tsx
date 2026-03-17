@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import {
@@ -19,7 +19,7 @@ import {
     DollarSign,
     Copy,
     Eye,
-    RefreshCcw as RefreshCcwIcon,
+    RefreshCcw,
     ArrowUpRight,
     Timer,
     Users,
@@ -28,6 +28,10 @@ import {
 import { toast } from 'sonner';
 import { format, isValid } from 'date-fns';
 import IssueTicketModalNew from './components/IssueTicketModalNew';
+
+// ══════════════════════════════════════════
+// TYPES
+// ══════════════════════════════════════════
 
 interface Booking {
     id: string;
@@ -52,18 +56,12 @@ interface Booking {
     };
     passengerName: string;
     passengerCount: number;
-    contact: {
-        email: string;
-        phone: string;
-    };
+    contact: { email: string; phone: string };
     paymentSource: {
         holderName: string;
         cardNumber: string;
         expiryDate: string;
-        billingAddress?: {
-            zipCode?: string;
-            [key: string]: any;
-        };
+        billingAddress?: { zipCode?: string; [key: string]: any };
         zipCode?: string | null;
     } | null;
     amount: {
@@ -77,9 +75,7 @@ interface Booking {
         createdAt: string;
         timeLeft: number;
     };
-    actionData: {
-        ticketUrl: string | null;
-    };
+    actionData: { ticketUrl: string | null };
 }
 
 interface GlobalStats {
@@ -91,22 +87,58 @@ interface GlobalStats {
     currency: string;
 }
 
-function safeFormatDate(
-    dateStr: string | null | undefined,
-    formatStr: string,
-    fallback: string = 'N/A',
-): string {
+type FilterType = 'all' | 'held' | 'issued' | 'cancelled';
+
+// ══════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════
+
+function safeFormat(dateStr: string | null | undefined, fmt: string, fallback = 'N/A') {
     if (!dateStr) return fallback;
     try {
         const d = new Date(dateStr);
-        if (!isValid(d)) return fallback;
-        return format(d, formatStr);
+        return isValid(d) ? format(d, fmt) : fallback;
     } catch {
         return fallback;
     }
 }
 
-const CountdownTimer = ({ deadline }: { deadline: string }) => {
+const AVATAR_COLORS = [
+    'from-blue-500 to-indigo-600',
+    'from-violet-500 to-purple-600',
+    'from-emerald-500 to-teal-600',
+    'from-rose-500 to-pink-600',
+    'from-amber-500 to-orange-600',
+    'from-cyan-500 to-sky-600',
+];
+
+function getAvatarColor(name: string) {
+    return AVATAR_COLORS[(name?.charCodeAt(0) || 0) % AVATAR_COLORS.length];
+}
+
+function getInitials(name: string) {
+    return name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
+}
+
+function getPageNumbers(current: number, total: number): number[] {
+    if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
+    const pages = new Set<number>([1, total]);
+    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+        pages.add(i);
+    }
+    return Array.from(pages).sort((a, b) => a - b);
+}
+
+// ══════════════════════════════════════════
+// SUB-COMPONENTS
+// ══════════════════════════════════════════
+
+function CountdownTimer({ deadline }: { deadline: string }) {
     const [timeLeft, setTimeLeft] = useState('');
     const [isUrgent, setIsUrgent] = useState(false);
 
@@ -123,19 +155,18 @@ const CountdownTimer = ({ deadline }: { deadline: string }) => {
             setIsUrgent(diff < 3600000);
             return `${h}h ${m}m ${s}s`;
         };
-
         setTimeLeft(calc());
         const t = setInterval(() => setTimeLeft(calc()), 1000);
         return () => clearInterval(t);
     }, [deadline]);
 
-    if (timeLeft === 'Expired')
+    if (timeLeft === 'Expired') {
         return (
             <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-400">
-                <Clock size={9} />
-                Expired
+                <Clock size={9} /> Expired
             </span>
         );
+    }
 
     return (
         <span
@@ -149,13 +180,10 @@ const CountdownTimer = ({ deadline }: { deadline: string }) => {
             {timeLeft}
         </span>
     );
-};
+}
 
-const StatusBadge = ({ status }: { status: Booking['status'] }) => {
-    const map: Record<
-        Booking['status'],
-        { label: string; dot: string; bg: string; text: string; ring: string }
-    > = {
+function StatusBadge({ status }: { status: Booking['status'] }) {
+    const map: Record<string, { label: string; dot: string; bg: string; text: string; ring: string }> = {
         issued: { label: 'Issued', dot: 'bg-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700', ring: 'ring-emerald-200/60' },
         held: { label: 'Held', dot: 'bg-amber-500', bg: 'bg-amber-50', text: 'text-amber-700', ring: 'ring-amber-200/60' },
         cancelled: { label: 'Cancelled', dot: 'bg-slate-400', bg: 'bg-slate-50', text: 'text-slate-600', ring: 'ring-slate-200/60' },
@@ -170,25 +198,28 @@ const StatusBadge = ({ status }: { status: Booking['status'] }) => {
             {d.label}
         </span>
     );
-};
+}
 
-function StatCard({ label, value, icon: Icon, accentColor, trend }: {
-    label: string; value: string | number; icon: any; accentColor: string; trend?: string;
+function StatCard({
+    label,
+    value,
+    icon: Icon,
+    accentColor,
+}: {
+    label: string;
+    value: string | number;
+    icon: any;
+    accentColor: string;
 }) {
     return (
-        <div className="group relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white p-5 transition-all duration-300 hover:shadow-lg hover:shadow-slate-200/50 hover:border-slate-300/60">
+        <div className="group relative rounded-2xl border border-slate-200/60 bg-white p-5 transition-all hover:shadow-lg hover:shadow-slate-200/50 hover:border-slate-300/60">
             <div className={`absolute -top-8 -right-8 h-24 w-24 rounded-full blur-2xl opacity-[0.07] ${accentColor}`} />
             <div className="relative flex items-start justify-between">
                 <div className="space-y-1.5">
                     <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">{label}</p>
                     <p className="text-2xl font-extrabold tracking-tight text-slate-900">{value}</p>
-                    {trend && (
-                        <p className="flex items-center gap-1 text-[11px] font-medium text-emerald-600">
-                            <TrendingUp size={11} />{trend}
-                        </p>
-                    )}
                 </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 ring-1 ring-slate-100 transition-transform duration-300 group-hover:scale-110">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 ring-1 ring-slate-100 transition-transform group-hover:scale-110">
                     <Icon className="h-5 w-5" />
                 </div>
             </div>
@@ -236,61 +267,64 @@ function TableSkeleton() {
     );
 }
 
-const getAvatarColor = (name: string) => {
-    const colors = [
-        'from-blue-500 to-indigo-600',
-        'from-violet-500 to-purple-600',
-        'from-emerald-500 to-teal-600',
-        'from-rose-500 to-pink-600',
-        'from-amber-500 to-orange-600',
-        'from-cyan-500 to-sky-600',
-    ];
-    return colors[(name?.charCodeAt(0) || 0) % colors.length];
-};
-
-function getPageNumbers(current: number, total: number): number[] {
-    if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
-    const pages = new Set<number>();
-    pages.add(1);
-    pages.add(total);
-    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
-        pages.add(i);
-    }
-    return Array.from(pages).sort((a, b) => a - b);
-}
+// ══════════════════════════════════════════
+// MAIN COMPONENT
+// ══════════════════════════════════════════
 
 export default function BookingsDashboard() {
     const router = useRouter();
 
+    // ── Data state ──
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
     const [search, setSearch] = useState('');
-    const [filter, setFilter] = useState<'all' | 'held' | 'issued' | 'cancelled'>('all');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [filter, setFilter] = useState<FilterType>('all');
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0);
+    const searchTimer = useRef<NodeJS.Timeout | null>(null);
 
-    // ✅ Issue Modal — শুধু open/close + selected booking
+    // ── Modal state ──
     const [issueModalOpen, setIssueModalOpen] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
+    // ── Stats ──
     const [globalStats, setGlobalStats] = useState<GlobalStats>({
-        total: 0, issued: 0, cancelled: 0, pending: 0, profit: 0, currency: 'USD',
+        total: 0,
+        issued: 0,
+        cancelled: 0,
+        pending: 0,
+        profit: 0,
+        currency: 'USD',
     });
 
-    const [refreshKey, setRefreshKey] = useState(0);
+    // ── Debounce search ──
+    useEffect(() => {
+        if (searchTimer.current) clearTimeout(searchTimer.current);
+        searchTimer.current = setTimeout(() => {
+            setDebouncedSearch(search);
+            setPage(1);
+        }, 400);
+        return () => {
+            if (searchTimer.current) clearTimeout(searchTimer.current);
+        };
+    }, [search]);
 
-    const fetchBookings = useCallback(async (pageNum: number) => {
+    // ── Fetch bookings ──
+    const fetchBookings = useCallback(async () => {
         setLoading(true);
         try {
             const params = new URLSearchParams({
-                page: String(pageNum),
+                page: String(page),
                 limit: '20',
-                ...(filter !== 'all' && { status: filter }),
-                ...(search.trim() && { search: search.trim() }),
             });
-            const res = await axios.get(`/api/dashboard/bookings?${params.toString()}`);
+            if (filter !== 'all') params.set('status', filter);
+            if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim());
+
+            const res = await axios.get(`/api/dashboard/bookings?${params}`);
             if (res.data.success) {
                 setBookings(res.data.data);
                 setTotalPages(res.data.meta.totalPages);
@@ -301,9 +335,9 @@ export default function BookingsDashboard() {
         } finally {
             setLoading(false);
         }
-    }, [filter, search]);
+    }, [page, filter, debouncedSearch]);
 
-    const fetchGlobalStats = useCallback(async () => {
+    const fetchStats = useCallback(async () => {
         try {
             const res = await axios.get('/api/dashboard/stats');
             if (res.data.success) {
@@ -318,43 +352,64 @@ export default function BookingsDashboard() {
                 });
             }
         } catch {
-            console.warn('Stats API unavailable, using page-level fallback');
+            console.warn('Stats API unavailable');
         }
     }, []);
 
-    useEffect(() => { fetchBookings(page); }, [page, refreshKey, fetchBookings]);
-    useEffect(() => { fetchGlobalStats(); }, [refreshKey, fetchGlobalStats]);
+    useEffect(() => {
+        fetchBookings();
+    }, [fetchBookings, refreshKey]);
 
+    useEffect(() => {
+        fetchStats();
+    }, [fetchStats, refreshKey]);
+
+    // ── Handlers ──
     const handlePageChange = (n: number) => {
         if (n >= 1 && n <= totalPages) setPage(n);
     };
 
-    const handleViewDetails = (booking: Booking) => {
-        const hasPnr = booking.pnr && booking.pnr !== '---';
-        if (hasPnr) {
-            router.push(`/admin/bookings/${booking.id}`);
-        } else {
-            router.push(`/admin/bookings/failed/${booking.bookingRef}`);
-        }
+    const handleFilterChange = (f: FilterType) => {
+        setFilter(f);
+        setPage(1);
     };
 
-    // ✅ শুধু modal open করে, বাকি সব modal component handle করে
+    const handleViewDetails = (booking: Booking) => {
+        const hasPnr = booking.pnr && booking.pnr !== '---';
+        router.push(
+            hasPnr
+                ? `/admin/bookings/${booking.id}`
+                : `/admin/bookings/failed/${booking.bookingRef}`,
+        );
+    };
+
     const openIssueModal = (b: Booking) => {
         setSelectedBooking(b);
         setIssueModalOpen(true);
     };
 
+    const closeIssueModal = () => {
+        setIssueModalOpen(false);
+        setTimeout(() => setSelectedBooking(null), 200);
+    };
+
+    const handleIssueSuccess = () => {
+        closeIssueModal();
+        setRefreshKey((p) => p + 1);
+    };
+
     const handleCopy = (text: string) => {
         navigator.clipboard.writeText(text);
-        toast.success('Copied to clipboard');
+        toast.success('Copied');
     };
 
     const handleRefresh = () => {
         setIsRefreshing(true);
-        setRefreshKey((prev) => prev + 1);
+        setRefreshKey((p) => p + 1);
         setTimeout(() => setIsRefreshing(false), 600);
     };
 
+    // ── Derived ──
     const stats = useMemo(() => {
         if (globalStats.total > 0) return globalStats;
         return {
@@ -362,30 +417,23 @@ export default function BookingsDashboard() {
             issued: bookings.filter((b) => b.status === 'issued').length,
             cancelled: bookings.filter((b) => b.status === 'cancelled').length,
             pending: bookings.filter((b) => b.status === 'held' || b.status === 'processing').length,
-            profit: bookings.filter((b) => b.status === 'issued').reduce((acc, c) => acc + (c.amount.markup || 0), 0),
+            profit: bookings
+                .filter((b) => b.status === 'issued')
+                .reduce((acc, c) => acc + (c.amount.markup || 0), 0),
             currency: 'USD',
         };
     }, [bookings, totalCount, globalStats]);
 
-    const filteredBookings = useMemo(() => {
-        return bookings.filter((b) => {
-            const t = search.toLowerCase();
-            const matchSearch =
-                !t ||
-                b.bookingRef.toLowerCase().includes(t) ||
-                b.pnr?.toLowerCase().includes(t) ||
-                b.passengerName.toLowerCase().includes(t) ||
-                b.contact?.email?.toLowerCase().includes(t);
-            const matchFilter = filter === 'all' || b.status === filter;
-            return matchSearch && matchFilter;
-        });
-    }, [bookings, search, filter]);
-
     const pageNumbers = useMemo(() => getPageNumbers(page, totalPages), [page, totalPages]);
+
+    // ══════════════════════════════════════════
+    // RENDER
+    // ══════════════════════════════════════════
 
     return (
         <div className="min-h-screen w-full bg-[#f8f9fb] p-4 md:p-6 lg:p-8">
             <div className="mx-auto flex max-w-[1400px] flex-col gap-6">
+
                 {/* ─── HEADER ─── */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div className="space-y-1.5">
@@ -399,15 +447,17 @@ export default function BookingsDashboard() {
                             Bookings Dashboard
                         </h1>
                         <p className="text-sm text-slate-500 max-w-lg">
-                            Monitor flight reservations, issue tickets and track profit in real time.
+                            Monitor flight reservations, issue tickets and track profit.
                         </p>
                     </div>
-                    <div className="flex items-center gap-2.5 rounded-xl border border-emerald-200/60 bg-gradient-to-r from-emerald-50 to-emerald-50/50 px-4 py-2.5 shadow-2xl shadow-gray-100">
+                    <div className="flex items-center gap-2.5 rounded-xl border border-emerald-200/60 bg-gradient-to-r from-emerald-50 to-emerald-50/50 px-4 py-2.5 shadow-sm">
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
                             <TrendingUp size={15} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Profit so far</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">
+                                Profit so far
+                            </p>
                             <p className="text-base font-extrabold tracking-tight text-emerald-800">
                                 {stats.currency} {stats.profit.toFixed(2)}
                             </p>
@@ -415,7 +465,7 @@ export default function BookingsDashboard() {
                     </div>
                 </div>
 
-                {/* ─── STAT CARDS ─── */}
+                {/* ─── STATS ─── */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <StatCard label="Total Bookings" value={stats.total.toLocaleString()} icon={ShoppingCart} accentColor="bg-blue-500" />
                     <StatCard label="Issued" value={stats.issued.toLocaleString()} icon={CheckCircle} accentColor="bg-emerald-500" />
@@ -430,14 +480,14 @@ export default function BookingsDashboard() {
                             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
                             <input
                                 type="text"
-                                placeholder="Search PNR, reference, passenger, email…"
-                                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-9 pr-4 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-all focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                placeholder="Search PNR, reference, passenger…"
+                                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-9 pr-9 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-all focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
                                 value={search}
-                                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                                onChange={(e) => setSearch(e.target.value)}
                             />
                             {search && (
                                 <button
-                                    onClick={() => { setSearch(''); setPage(1); }}
+                                    onClick={() => setSearch('')}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
                                 >
                                     <X size={14} />
@@ -447,16 +497,16 @@ export default function BookingsDashboard() {
                         <button
                             title="Refresh"
                             onClick={handleRefresh}
-                            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 transition-all active:scale-95 cursor-pointer"
+                            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all active:scale-95 cursor-pointer"
                         >
-                            <RefreshCcwIcon size={15} className={isRefreshing ? 'animate-spin' : ''} />
+                            <RefreshCcw size={15} className={isRefreshing ? 'animate-spin' : ''} />
                         </button>
                     </div>
                     <div className="flex items-center gap-1 rounded-lg bg-slate-100/80 p-1">
                         {(['all', 'held', 'issued', 'cancelled'] as const).map((s) => (
                             <button
                                 key={s}
-                                onClick={() => { setFilter(s); setPage(1); }}
+                                onClick={() => handleFilterChange(s)}
                                 className={`rounded-lg px-3.5 py-1.5 text-[11px] font-semibold capitalize transition-all cursor-pointer ${
                                     filter === s
                                         ? 'bg-slate-900 text-white shadow-sm'
@@ -470,16 +520,20 @@ export default function BookingsDashboard() {
                 </div>
 
                 {/* ─── TABLE ─── */}
-                <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white">
+                <div className="rounded-2xl border border-slate-200/60 bg-white">
+                    {/* Table header */}
                     <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
                         <div>
                             <h2 className="text-sm font-semibold text-slate-900">All Bookings</h2>
                             <p className="mt-0.5 text-[11px] text-slate-500">
-                                Showing <span className="font-semibold text-slate-700">{filteredBookings.length}</span>{' '}
-                                of <span className="font-semibold text-slate-700">{totalCount}</span> bookings
+                                Showing{' '}
+                                <span className="font-semibold text-slate-700">{bookings.length}</span> of{' '}
+                                <span className="font-semibold text-slate-700">{totalCount}</span>
                             </p>
                         </div>
-                        <div className="text-[11px] text-slate-400">Page {page} of {totalPages}</div>
+                        <div className="text-[11px] text-slate-400">
+                            Page {page} / {totalPages}
+                        </div>
                     </div>
 
                     {loading ? (
@@ -490,16 +544,22 @@ export default function BookingsDashboard() {
                                 <table className="w-full text-left text-sm">
                                     <thead>
                                         <tr className="border-b border-slate-100 bg-slate-50/60">
-                                            <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Ref / PNR</th>
-                                            <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Flight</th>
-                                            <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Passenger</th>
-                                            <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Date & Status</th>
-                                            <th className="px-5 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-400">Amount</th>
-                                            <th className="px-5 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-400">Actions</th>
+                                            {['Ref / PNR', 'Flight', 'Passenger', 'Date & Status', 'Amount', 'Actions'].map(
+                                                (h, i) => (
+                                                    <th
+                                                        key={h}
+                                                        className={`px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 ${
+                                                            i === 4 ? 'text-center' : ''
+                                                        } ${i === 5 ? 'text-right' : ''}`}
+                                                    >
+                                                        {h}
+                                                    </th>
+                                                ),
+                                            )}
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50">
-                                        {filteredBookings.length === 0 ? (
+                                        {bookings.length === 0 ? (
                                             <tr>
                                                 <td colSpan={6} className="px-5 py-20 text-center">
                                                     <div className="mx-auto flex flex-col items-center gap-3">
@@ -507,10 +567,14 @@ export default function BookingsDashboard() {
                                                             <Plane className="h-6 w-6 text-slate-300" />
                                                         </div>
                                                         <p className="text-sm font-semibold text-slate-700">No bookings found</p>
-                                                        <p className="text-xs text-slate-500">Try adjusting your search or filters</p>
+                                                        <p className="text-xs text-slate-500">Try adjusting search or filters</p>
                                                         {(search || filter !== 'all') && (
                                                             <button
-                                                                onClick={() => { setSearch(''); setFilter('all'); setPage(1); }}
+                                                                onClick={() => {
+                                                                    setSearch('');
+                                                                    setFilter('all');
+                                                                    setPage(1);
+                                                                }}
                                                                 className="mt-1 rounded-lg bg-slate-900 px-4 py-2 text-xs font-medium text-white hover:bg-slate-800 cursor-pointer"
                                                             >
                                                                 Clear filters
@@ -520,33 +584,30 @@ export default function BookingsDashboard() {
                                                 </td>
                                             </tr>
                                         ) : (
-                                            filteredBookings.map((booking) => {
+                                            bookings.map((booking) => {
                                                 const hasPnr = booking.pnr && booking.pnr !== '---';
-                                                const initials = booking.passengerName
-                                                    .split(' ')
-                                                    .map((n) => n[0])
-                                                    .join('')
-                                                    .slice(0, 2)
-                                                    .toUpperCase();
+                                                const initials = getInitials(booking.passengerName);
                                                 const issueDisabled = booking.canRetry === false;
 
                                                 return (
                                                     <tr
                                                         key={booking.id}
-                                                        className={`group transition-colors duration-150 ${
+                                                        className={`group transition-colors ${
                                                             booking.status === 'held'
                                                                 ? 'hover:bg-amber-50/30 bg-amber-50/10'
                                                                 : 'hover:bg-blue-50/30'
                                                         }`}
                                                     >
-                                                        {/* ── Ref / PNR ── */}
+                                                        {/* Ref / PNR */}
                                                         <td className="px-5 py-4 align-top">
                                                             <div className="space-y-1.5">
-                                                                <p className="text-[12px] font-bold text-slate-800">{booking.bookingRef}</p>
+                                                                <p className="text-[12px] font-bold text-slate-800">
+                                                                    {booking.bookingRef}
+                                                                </p>
                                                                 {hasPnr ? (
                                                                     <button
                                                                         onClick={() => handleCopy(booking.pnr)}
-                                                                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-slate-900 px-2 py-1 font-mono text-[10px] font-bold text-white transition-all hover:bg-slate-700 active:scale-95"
+                                                                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-slate-900 px-2 py-1 font-mono text-[10px] font-bold text-white hover:bg-slate-700 active:scale-95"
                                                                         title="Copy PNR"
                                                                     >
                                                                         {booking.pnr}
@@ -565,16 +626,18 @@ export default function BookingsDashboard() {
                                                             </div>
                                                         </td>
 
-                                                        {/* ── Flight ── */}
+                                                        {/* Flight */}
                                                         <td className="px-5 py-4 align-top">
                                                             <div className="flex items-start gap-2.5">
-                                                                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
+                                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-100 bg-slate-50">
                                                                     {booking.flight.logoUrl ? (
                                                                         <img
                                                                             src={booking.flight.logoUrl}
                                                                             alt=""
                                                                             className="h-full w-full object-contain p-1"
-                                                                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                                            onError={(e) => {
+                                                                                (e.target as HTMLImageElement).style.display = 'none';
+                                                                            }}
                                                                         />
                                                                     ) : (
                                                                         <Plane size={14} className="text-slate-400" />
@@ -589,21 +652,27 @@ export default function BookingsDashboard() {
                                                                         {booking.flight.flightNumber && ` · ${booking.flight.flightNumber}`}
                                                                     </p>
                                                                     <span className="mt-1 inline-flex rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-500">
-                                                                        {booking.flight.tripType.split('_').join(' ')}
+                                                                        {booking.flight.tripType.replace(/_/g, ' ')}
                                                                     </span>
                                                                 </div>
                                                             </div>
                                                         </td>
 
-                                                        {/* ── Passenger ── */}
+                                                        {/* Passenger */}
                                                         <td className="px-5 py-4 align-top">
                                                             <div className="flex items-center gap-2.5">
-                                                                <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${getAvatarColor(booking.passengerName)} text-[10px] font-bold text-white shadow-sm`}>
+                                                                <div
+                                                                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${getAvatarColor(booking.passengerName)} text-[10px] font-bold text-white shadow-sm`}
+                                                                >
                                                                     {initials}
                                                                 </div>
                                                                 <div className="min-w-0">
-                                                                    <p className="text-[13px] font-semibold text-slate-900 truncate max-w-[150px]">{booking.passengerName}</p>
-                                                                    <p className="mt-0.5 text-[11px] text-slate-500 truncate max-w-[160px]">{booking.contact.email}</p>
+                                                                    <p className="text-[13px] font-semibold text-slate-900 truncate max-w-[150px]">
+                                                                        {booking.passengerName}
+                                                                    </p>
+                                                                    <p className="mt-0.5 text-[11px] text-slate-500 truncate max-w-[160px]">
+                                                                        {booking.contact.email}
+                                                                    </p>
                                                                     {booking.passengerCount > 1 && (
                                                                         <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-slate-400">
                                                                             <Users size={9} />+{booking.passengerCount - 1} travelers
@@ -613,19 +682,19 @@ export default function BookingsDashboard() {
                                                             </div>
                                                         </td>
 
-                                                        {/* ── Date & Status ── */}
+                                                        {/* Date & Status */}
                                                         <td className="px-5 py-4 align-top">
                                                             <div className="space-y-1.5">
                                                                 <div className="flex items-center gap-1.5 text-[12px] text-slate-600">
                                                                     <Calendar size={11} className="text-slate-400" />
                                                                     <span className="font-medium">
-                                                                        {safeFormatDate(booking.flight.date, 'dd MMM yyyy', 'No date')}
+                                                                        {safeFormat(booking.flight.date, 'dd MMM yyyy', 'No date')}
                                                                     </span>
                                                                     {booking.flight.date && (
                                                                         <>
-                                                                            <span className="text-slate-400">·</span>
+                                                                            <span className="text-slate-300">·</span>
                                                                             <span className="text-slate-500">
-                                                                                {safeFormatDate(booking.flight.date, 'hh:mm a')}
+                                                                                {safeFormat(booking.flight.date, 'hh:mm a')}
                                                                             </span>
                                                                         </>
                                                                     )}
@@ -640,12 +709,12 @@ export default function BookingsDashboard() {
                                                                     </span>
                                                                 )}
                                                                 <p className="text-[10px] text-slate-400">
-                                                                    Updated: {safeFormatDate(booking.updatedAt, 'dd MMM, hh:mm a', 'Never')}
+                                                                    Updated: {safeFormat(booking.updatedAt, 'dd MMM, hh:mm a', 'Never')}
                                                                 </p>
                                                             </div>
                                                         </td>
 
-                                                        {/* ── Amount ── */}
+                                                        {/* Amount */}
                                                         <td className="px-5 py-4 text-center align-top">
                                                             <p className="text-[13px] font-bold text-slate-900">
                                                                 {booking.amount.currency} {booking.amount.total.toFixed(2)}
@@ -657,34 +726,33 @@ export default function BookingsDashboard() {
                                                             )}
                                                         </td>
 
-                                                        {/* ── Actions ── */}
+                                                        {/* Actions */}
                                                         <td className="px-5 py-4 text-right align-top">
                                                             <div className="flex items-center justify-end gap-2">
-                                                                {booking.status === 'issued' && (
-                                                                    booking.actionData.ticketUrl ? (
+                                                                {booking.status === 'issued' &&
+                                                                    (booking.actionData.ticketUrl ? (
                                                                         <a
                                                                             href={booking.actionData.ticketUrl}
                                                                             target="_blank"
                                                                             rel="noopener noreferrer"
-                                                                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300"
-                                                                            title="Download e-ticket"
+                                                                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 transition-all"
+                                                                            title="Download ticket"
                                                                         >
                                                                             <Download size={14} />
                                                                         </a>
                                                                     ) : (
                                                                         <span
-                                                                            title="Ticket URL not available in test mode"
+                                                                            title="No ticket URL"
                                                                             className="flex h-8 w-8 items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed"
                                                                         >
                                                                             <Download size={14} />
                                                                         </span>
-                                                                    )
-                                                                )}
+                                                                    ))}
 
                                                                 <button
                                                                     onClick={() => handleViewDetails(booking)}
-                                                                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 cursor-pointer"
-                                                                    title="View booking details"
+                                                                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 cursor-pointer transition-all"
+                                                                    title="View details"
                                                                 >
                                                                     <Eye size={14} />
                                                                 </button>
@@ -693,7 +761,7 @@ export default function BookingsDashboard() {
                                                                     <button
                                                                         onClick={() => !issueDisabled && openIssueModal(booking)}
                                                                         disabled={issueDisabled}
-                                                                        title={issueDisabled ? 'Max retry limit reached' : 'Issue ticket'}
+                                                                        title={issueDisabled ? 'Max retry reached' : 'Issue ticket'}
                                                                         className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[11px] font-bold shadow-sm transition-all ${
                                                                             issueDisabled
                                                                                 ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
@@ -714,92 +782,92 @@ export default function BookingsDashboard() {
                                 </table>
                             </div>
 
-                            {/* ── Pagination ── */}
-                            <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3">
-                                <p className="text-[11px] text-slate-400">
-                                    Page <span className="font-semibold text-slate-600">{page}</span> of{' '}
-                                    <span className="font-semibold text-slate-600">{totalPages}</span>{' '}
-                                    · {filteredBookings.length} shown
-                                </p>
-                                <div className="flex items-center gap-1.5">
-                                    <button
-                                        onClick={() => handlePageChange(page - 1)}
-                                        disabled={page === 1}
-                                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-all hover:bg-slate-50 hover:border-slate-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-95"
-                                    >
-                                        <ChevronLeft size={15} />
-                                    </button>
-                                    {pageNumbers.map((pageNum, idx) => {
-                                        const prevPage = pageNumbers[idx - 1];
-                                        const showGap = prevPage && pageNum - prevPage > 1;
-                                        return (
-                                            <div key={pageNum} className="flex items-center gap-1.5">
-                                                {showGap && <span className="px-1 text-[11px] text-slate-400">…</span>}
-                                                <button
-                                                    onClick={() => handlePageChange(pageNum)}
-                                                    className={`flex h-8 w-8 items-center justify-center rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
-                                                        page === pageNum
-                                                            ? 'bg-slate-900 text-white shadow-sm'
-                                                            : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                                                    }`}
-                                                >
-                                                    {pageNum}
-                                                </button>
-                                            </div>
-                                        );
-                                    })}
-                                    <button
-                                        onClick={() => handlePageChange(page + 1)}
-                                        disabled={page === totalPages}
-                                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-all hover:bg-slate-50 hover:border-slate-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-95"
-                                    >
-                                        <ChevronRight size={15} />
-                                    </button>
+                            {/* Pagination */}
+                            {totalPages > 1 && (
+                                <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3">
+                                    <p className="text-[11px] text-slate-400">
+                                        Page{' '}
+                                        <span className="font-semibold text-slate-600">{page}</span> of{' '}
+                                        <span className="font-semibold text-slate-600">{totalPages}</span>
+                                    </p>
+                                    <div className="flex items-center gap-1.5">
+                                        <button
+                                            onClick={() => handlePageChange(page - 1)}
+                                            disabled={page === 1}
+                                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-95 transition-all"
+                                        >
+                                            <ChevronLeft size={15} />
+                                        </button>
+                                        {pageNumbers.map((pn, idx) => {
+                                            const prev = pageNumbers[idx - 1];
+                                            const gap = prev && pn - prev > 1;
+                                            return (
+                                                <div key={pn} className="flex items-center gap-1.5">
+                                                    {gap && <span className="px-1 text-[11px] text-slate-400">…</span>}
+                                                    <button
+                                                        onClick={() => handlePageChange(pn)}
+                                                        className={`flex h-8 w-8 items-center justify-center rounded-lg text-[11px] font-semibold cursor-pointer transition-all ${
+                                                            page === pn
+                                                                ? 'bg-slate-900 text-white shadow-sm'
+                                                                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                                                        }`}
+                                                    >
+                                                        {pn}
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+                                        <button
+                                            onClick={() => handlePageChange(page + 1)}
+                                            disabled={page === totalPages}
+                                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-95 transition-all"
+                                        >
+                                            <ChevronRight size={15} />
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </>
                     )}
                 </div>
             </div>
 
-            {/* ═══════════════════ ISSUE TICKET MODAL (EXTRACTED COMPONENT) ═══════════════════ */}
-            {selectedBooking && (
-                <IssueTicketModalNew
-                    open={issueModalOpen}
-                    onClose={() => {
-                        setIssueModalOpen(false);
-                        setSelectedBooking(null);
-                    }}
-                    onSuccess={() => {
-                        setIssueModalOpen(false);
-                        setSelectedBooking(null);
-                        setRefreshKey((prev) => prev + 1);
-                    }}
-                    bookingId={selectedBooking.id}
-                    bookingRef={selectedBooking.bookingRef}
-                    pnr={selectedBooking.pnr !== '---' ? selectedBooking.pnr : 'N/A'}
-                    finance={{
-                        basePrice: String(selectedBooking.amount.base_amount),
-                        tax: '0',
-                        clientTotal: String(selectedBooking.amount.total.toFixed(2)),
-                        currency: selectedBooking.amount.currency,
-                        yourMarkup: selectedBooking.amount.markup,
-                        duffelTotal: String(selectedBooking.amount.base_amount.toFixed(2)),
-                    }}
-                    paymentSource={
-                        selectedBooking.paymentSource
-                            ? {
-                                  holderName: selectedBooking.paymentSource.holderName,
-                                  cardNumber: selectedBooking.paymentSource.cardNumber,
-                                  expiryDate: selectedBooking.paymentSource.expiryDate,
-                                  cvv: null,
-                                  billingAddress: selectedBooking.paymentSource.billingAddress,
-                                  zipCode: selectedBooking.paymentSource.zipCode,
-                              }
-                            : null
-                    }
-                />
-            )}
+            {/* ═══════ ISSUE TICKET MODAL ═══════ */}
+
+{selectedBooking && (
+    <IssueTicketModalNew
+        open={issueModalOpen}
+        onClose={closeIssueModal}
+        onSuccess={handleIssueSuccess}
+        bookingId={selectedBooking.id}
+        bookingRef={selectedBooking.bookingRef}
+        pnr={selectedBooking.pnr !== '---' ? selectedBooking.pnr : 'N/A'}
+        finance={{
+            basePrice: String(selectedBooking.amount?.base_amount ?? 0),
+            tax: '0',
+            clientTotal: String(
+                (selectedBooking.amount?.total ?? 0).toFixed(2)
+            ),
+            currency: selectedBooking.amount?.currency || 'GBP',
+            yourMarkup: selectedBooking.amount?.markup ?? 0,
+            duffelTotal: String(
+                (selectedBooking.amount?.base_amount ?? 0).toFixed(2)
+            ),
+        }}
+        paymentSource={
+            selectedBooking.paymentSource
+                ? {
+                      holderName: selectedBooking.paymentSource.holderName || '',
+                      cardNumber: selectedBooking.paymentSource.cardNumber || '',
+                      expiryDate: selectedBooking.paymentSource.expiryDate || '',
+                      cvv: null,
+                      billingAddress: selectedBooking.paymentSource.billingAddress,
+                      zipCode: selectedBooking.paymentSource.zipCode,
+                  }
+                : null
+        }
+    />
+)}
         </div>
     );
 }

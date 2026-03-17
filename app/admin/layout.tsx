@@ -1,12 +1,10 @@
 // app/(dashboard)/layout.tsx
-
-import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './components/AppSidebar';
 import '@/app/(main)/globals.css';
 import { Toaster } from 'sonner';
 import { Metadata, Viewport } from 'next';
-
+import "./style.css"; 
 export const metadata: Metadata = {
     title: 'Admin Dashboard | FlyBismillah',
     description: 'Travel Agency Management System - Admin Panel',
