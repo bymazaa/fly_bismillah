@@ -283,11 +283,10 @@ export default function DuffelCardPayment({
             )}
 
             {/* ── Duffel Payment Element ── */}
-            <div className=" border border-gray-200/80 bg-white shadow-md shadow-gray-100/80">
-                <div className="h-[3px] w-full bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900" />
-
+            <div className=" border rounded-xl border-gray-200/80 bg-white shadow-md shadow-gray-100/80">
+              
                 <div className="flex items-center justify-between px-5 pt-4 pb-2">
-                    {/* <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2.5">
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-900 shadow-sm">
                             <CreditCard className="h-3.5 w-3.5 text-white" />
                         </div>
@@ -295,7 +294,7 @@ export default function DuffelCardPayment({
                             <p className="text-[12px] font-bold text-gray-800">Payment Details</p>
                             <p className="text-[9px] text-gray-400">All fields are required</p>
                         </div>
-                    </div> */}
+                    </div>
                     <div className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 ring-1 ring-emerald-100">
                         <span className="relative flex h-1.5 w-1.5">
                             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
@@ -310,38 +309,17 @@ export default function DuffelCardPayment({
                 {/* <div className="mx-5 h-px bg-gray-100" /> */}
 
                 <div
-                   className='w-[97%] mx-auto '
+                   className=' p-2 '
                  
                 >
                     <DuffelPayments
                         paymentIntentClientToken={clientToken}
                         onSuccessfulPayment={handleSuccessfulPayment}
                         onFailedPayment={handleFailedPayment}
+                        
                     />
                 </div>
 
-                <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50/50 px-5 py-2.5">
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1 text-[8px] font-semibold text-gray-400 uppercase tracking-wider">
-                            <Lock className="h-2.5 w-2.5" />
-                            256-bit
-                        </div>
-                        <div className="h-3 w-px bg-gray-200" />
-                        <span className="text-[8px] font-semibold text-gray-400 uppercase tracking-wider">
-                            PCI DSS
-                        </span>
-                        <div className="h-3 w-px bg-gray-200" />
-                        <span className="text-[8px] font-semibold text-gray-400 uppercase tracking-wider">
-                            3D Secure
-                        </span>
-                    </div>
-                    <div className="flex items-baseline gap-1">
-                        <span className="text-[9px] font-medium text-gray-400">{currency}</span>
-                        <span className="text-[14px] font-extrabold text-gray-900 tabular-nums">
-                            {amount.toFixed(2)}
-                        </span>
-                    </div>
-                </div>
             </div>
         </div>
     );
