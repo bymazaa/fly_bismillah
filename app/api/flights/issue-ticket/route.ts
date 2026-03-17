@@ -96,8 +96,13 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { bookingId } = body as { bookingId?: string };
+        
+        // 🟢 FIX 1: Extract paymentMethod from frontend
+        const { bookingId, paymentMethod } = body as { bookingId?: string; paymentMethod?: string };
         bookingIdForError = bookingId || null;
+
+        // 🟢 FIX 2: Map to schema enum ('card' or 'balance')
+        const clientPayWith = paymentMethod === 'card' ? 'card' : 'balance';
 
         if (!bookingId) {
             return NextResponse.json(
@@ -205,6 +210,7 @@ export async function POST(req: Request) {
             }
 
             try {
+                // 🟢 Duffel payment is still STRICTLY 'balance' as you requested
                 const payRes = await duffel.payments.create({
                     order_id: booking.duffelOrderId,
                     payment: { amount, currency, type: 'balance' },
@@ -221,29 +227,31 @@ export async function POST(req: Request) {
                 paymentId = payment.id;
                 paymentWasCaptured = true;
 
+                const clientPaid = `${booking.pricing?.total_amount} ${booking.pricing?.currency}`;
+                const duffelPaid = `${order.total_amount} ${booking.pricing?.currency}`;
+                const markupAmount = (booking.pricing?.markup || 0);
+                
+                // 🟢 FIX 3: Dynamic Admin Note based on payment method
+                let paymentAdminNoteMessage = '';
 
-const clientPaid = `${booking.pricing?.total_amount} ${booking.pricing?.currency}`;
-const duffelPaid = `${order.total_amount} ${booking.pricing?.currency}`;
-const paymentMethod = booking.clientPayWith === 'stripe' ? 'Stripe Card' : 'Wallet Balance';
-const markupAmount = (booking.pricing?.markup || 0);
+                if (clientPayWith === 'card') {
+                    paymentAdminNoteMessage = `✅ Payment Captured & Linked.\n💰 Client Paid: ${clientPaid} via Card\n✈️ Duffel Paid: ${duffelPaid} (Base Fare)\n📈 Net Markup: ${markupAmount.toFixed(2)} ${booking.pricing?.currency}\n🆔 Payment ID: ${paymentId}\nAction: Ready for Ticket Issuance.`;
+                } else {
+                    // Balance er khetre shudu Base Fare thakbe, Markup bad
+                    paymentAdminNoteMessage = `✅ Payment Deducted from Wallet.\n💰 Amount Deducted: ${duffelPaid} (Base Fare)\n💳 Method: Wallet Balance\n🆔 Payment ID: ${paymentId}\nAction: Ready for Ticket Issuance.`;
+                }
 
-await Booking.findByIdAndUpdate(bookingId, {
-    $set: {
-        paymentStatus: 'captured',
-        payment_id: paymentId,
-        lastRetryAt: new Date(),
-    },
-    $push: {
-        adminNotes: adminNote(
-            `✅ Payment Captured & Linked.
-             💰 Client Paid: ${clientPaid} via ${paymentMethod}
-             ✈️ Duffel Paid: ${duffelPaid} (Base Fare)
-             📈 Net Markup: ${markupAmount.toFixed(2)} ${booking.pricing?.currency}
-             🆔 Payment ID: ${paymentId}
-             Action: Ready for Ticket Issuance.`
-        ),
-    },
-});
+                await Booking.findByIdAndUpdate(bookingId, {
+                    $set: {
+                        paymentStatus: 'captured',
+                        payment_id: paymentId,
+                        clientPayWith: clientPayWith, // 🟢 Save the frontend method in DB
+                        lastRetryAt: new Date(),
+                    },
+                    $push: {
+                        adminNotes: adminNote(paymentAdminNoteMessage),
+                    },
+                });
             } catch (payErr: any) {
                 const errCode = payErr?.response?.data?.errors?.[0]?.code || '';
                 const errMsg = payErr?.response?.data?.errors?.[0]?.message || '';
@@ -254,7 +262,10 @@ await Booking.findByIdAndUpdate(bookingId, {
 
                     if (booking.paymentStatus !== 'captured') {
                         await Booking.findByIdAndUpdate(bookingId, {
-                            $set: { paymentStatus: 'captured' },
+                            $set: { 
+                                paymentStatus: 'captured',
+                                clientPayWith: clientPayWith // 🟢 Sync DB
+                            },
                             $push: {
                                 adminNotes: adminNote(
                                     `💰 Duffel confirms already paid. Synced paymentStatus → captured.`,
@@ -307,6 +318,7 @@ await Booking.findByIdAndUpdate(bookingId, {
                 $set: {
                     paymentStatus: 'captured',
                     payment_id: paymentId,
+                    clientPayWith: clientPayWith // 🟢 Sync DB
                 },
                 $push: {
                     adminNotes: adminNote(
@@ -338,6 +350,7 @@ await Booking.findByIdAndUpdate(bookingId, {
                 documents: dbDocs,
                 paymentStatus: 'captured',
                 payment_id: paymentId,
+                clientPayWith: clientPayWith, // 🟢 Sync DB
                 emailSent: true, // 🔒 Lock
                 retryCount: 0,
             },

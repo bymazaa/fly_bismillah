@@ -1,5 +1,3 @@
-// app/admin/booking/[id]/page.tsx
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -48,7 +46,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import StripeWrapper from "@/app/admin/components/StripeWrapper";
+import IssueTicketModalNew from "../components/IssueTicketModalNew";
 
 // ==========================================
 // 1. TYPES
@@ -164,7 +162,7 @@ interface BookingData {
   passengers: {
     id: string;
     type: string;
-    title: string;       // ✅ ADDED — mr, ms, miss, mrs, dr
+    title: string;
     fullName: string;
     ticketNumber: string;
     gender: string;
@@ -178,7 +176,6 @@ interface BookingData {
     currency: string;
     yourMarkup: number;
     duffelTotal: string;
-
   };
   paymentSource?: {
     holderName: string;
@@ -217,7 +214,6 @@ interface BookingData {
   } | null;
 }
 
-// ✅ ADDED — Refund API Response Type
 interface RefundAPIData {
   orderId: string;
   bookingRef: string;
@@ -232,7 +228,7 @@ interface RefundAPIData {
     totalDisplay: string;
     baseDisplay: string;
     taxDisplay: string;
-    markup:number
+    markup: number;
   };
   refund: {
     isRefundable: boolean;
@@ -279,10 +275,6 @@ interface RefundAPIData {
   }>;
   fetchedAt: string;
 }
-
-const INITIATE_CARD_URL = "/api/duffel/booking/initiate-card";
-
-
 
 // ==========================================
 // 2. HELPER COMPONENTS
@@ -584,21 +576,21 @@ export default function BookingDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [showCard, setShowCard] = useState(false);
 
-  // ✅ FIXED — Refund state uses correct API type
+  // ── Refund state ──
   const [refundModalOpen, setRefundModalOpen] = useState(false);
   const [refundLoading, setRefundLoading] = useState(false);
   const [refundData, setRefundData] = useState<RefundAPIData | null>(null);
 
+  // ── Issue modal state ──
+  const [issueModalOpen, setIssueModalOpen] = useState(false);
 
-  // ✅ ADD — opens modal + auto-fetches if needed
-const openRefundModal = () => {
+  const openRefundModal = () => {
     setRefundModalOpen(true);
     if (!refundData && data?.id) {
-        refreshRefundFromAirline();
+      refreshRefundFromAirline();
     }
-};
+  };
 
-  // ✅ FIXED — Properly typed refund fetch
   const refreshRefundFromAirline = async () => {
     if (!data) return;
     setRefundLoading(true);
@@ -621,13 +613,6 @@ const openRefundModal = () => {
     }
   };
 
-  const [issueModalOpen, setIssueModalOpen] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<
-    "stripe" | "balance" | "card"
-  >("stripe");
-  const [cvv, setCvv] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
-
   const fetchBooking = async () => {
     try {
       const res = await axios.get(`/api/dashboard/bookings/${id}`);
@@ -649,113 +634,6 @@ const openRefundModal = () => {
   const eTicketDoc =
     data?.documents?.find((doc) => doc.docType === "electronic_ticket") ||
     data?.documents?.[0];
-
-  const handleIssueTicket = async () => {
-    if (!data) return;
-
-    if (paymentMethod === "card" && cvv.length < 3) {
-      toast.error("Please enter a valid CVV");
-      return;
-    }
-
-    setIsProcessing(true);
-
-    const finalizeIssue = async (
-      pMethod: "balance" | "card",
-      cardId?: string
-    ) => {
-      const res = await axios.post("/api/flights/issue-ticket", {
-        bookingId: data.id,
-        paymentMethod: pMethod,
-        cardId,
-      });
-      if (res.data.success) {
-        toast.success("Ticket Issued Successfully!");
-        setIssueModalOpen(false);
-        fetchBooking();
-      } else {
-        throw new Error(res.data.message || "Failed to issue ticket");
-      }
-    };
-
-    try {
-      if (paymentMethod === "balance") {
-        await finalizeIssue("balance");
-        return;
-      }
-
-      if (paymentMethod === "card") {
-        if (!data.paymentSource) {
-          toast.error("No stored card information found.");
-          return;
-        }
-
-        const initRes = await axios.post(`${INITIATE_CARD_URL}/test`, {
-          bookingId: data.id,
-          cvv,
-        });
-
-        if (!initRes.data.success) {
-          const code = initRes.data.code;
-          const msg =
-            initRes.data.message ||
-            (code === "CARD_DECLINED"
-              ? "Card declined (Mock). Try another card."
-              : "Card verification failed (Mock).");
-          throw new Error(msg);
-        }
-
-        const {
-          action,
-          client_token,
-          card_id,
-          scenario,
-        }: {
-          action: "PROCEED_TO_PAY" | "SHOW_3DS_POPUP";
-          client_token?: string;
-          card_id: string;
-          scenario?: string;
-        } = initRes.data;
-
-        if (action === "SHOW_3DS_POPUP" && client_token) {
-          toast.loading("Simulating bank security check...", {
-            id: "3ds-toast",
-          });
-          try {
-            await new Promise((resolve) => setTimeout(resolve, 2500));
-            toast.dismiss("3ds-toast");
-            toast.success(
-              "3D Secure verification simulated successfully. Issuing ticket..."
-            );
-            return;
-          } catch (otpError: any) {
-            console.error("Mock 3DS Error:", otpError);
-            toast.dismiss("3ds-toast");
-            toast.error("Mock verification failed or cancelled by user.");
-            return;
-          }
-        }
-
-        if (action === "PROCEED_TO_PAY") {
-          await finalizeIssue("card", card_id);
-          return;
-        }
-
-        throw new Error(
-          `Unexpected card-init action: ${action} (scenario: ${scenario})`
-        );
-      }
-    } catch (error: any) {
-      console.error("Issue Error:", error);
-      const msg =
-        error?.response?.data?.message ||
-        error.message ||
-        "Failed to issue ticket";
-      toast.error(msg);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   if (loading)
     return (
@@ -1341,7 +1219,6 @@ const openRefundModal = () => {
                         key={idx}
                         className="transition-colors hover:bg-gray-50/40"
                       >
-                        {/* ✅ FIXED — Title shown before name */}
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-[11px] font-bold text-gray-500">
@@ -1662,7 +1539,6 @@ const openRefundModal = () => {
                       data.paymentStatus === "refunded") && (
                       <button
                         onClick={openRefundModal}
-
                         className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-600 hover:bg-rose-100 cursor-pointer ring-1 ring-rose-200"
                       >
                         <AlertCircle className="h-3 w-3" />
@@ -1875,11 +1751,7 @@ const openRefundModal = () => {
                         </div>
                       )}
                       <Button
-                        onClick={() => {
-                          setIssueModalOpen(true);
-                          setPaymentMethod("stripe");
-                          setCvv("");
-                        }}
+                        onClick={() => setIssueModalOpen(true)}
                         disabled={data.canRetry === false}
                         className="h-11 w-full cursor-pointer rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 text-[13px] font-bold text-white shadow-2xl shadow-gray-100 transition-all hover:from-gray-900 hover:to-gray-950 hover:shadow-md active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
                       >
@@ -1987,7 +1859,6 @@ const openRefundModal = () => {
 
             {/* Body */}
             <div className="flex-1 overflow-y-auto p-6 space-y-5">
-              {/* Loading */}
               {refundLoading && !refundData && (
                 <div className="flex flex-col items-center gap-3 py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-gray-300" />
@@ -1997,7 +1868,6 @@ const openRefundModal = () => {
                 </div>
               )}
 
-              {/* No Data */}
               {!refundLoading && !refundData && (
                 <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-gray-200/70 py-10 text-center">
                   <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-50">
@@ -2018,10 +1888,8 @@ const openRefundModal = () => {
                 </div>
               )}
 
-              {/* Data Loaded */}
               {refundData && (
                 <>
-                  {/* Status Badges */}
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       <span
@@ -2061,7 +1929,6 @@ const openRefundModal = () => {
                     )}
                   </div>
 
-                  {/* Financial Breakdown */}
                   <div className="rounded-xl border border-gray-200/70 bg-gray-50/30 p-4 space-y-2.5">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-3">
                       Order Financial Summary
@@ -2069,13 +1936,15 @@ const openRefundModal = () => {
                     <div className="flex justify-between text-[12px]">
                       <span className="text-gray-500">Base Fare + Taxes</span>
                       <span className="font-medium text-gray-700 tabular-nums">
-                        {refundData.financial.currency}  {refundData.financial.totalAmount}
+                        {refundData.financial.currency}{" "}
+                        {refundData.financial.totalAmount}
                       </span>
                     </div>
                     <div className="flex justify-between text-[12px]">
                       <span className="text-gray-500">Service Charge</span>
                       <span className="font-medium text-gray-700 tabular-nums">
-                        {refundData.financial.currency}  {refundData.financial?.markup || 10}
+                        {refundData.financial.currency}{" "}
+                        {refundData.financial?.markup || 10}
                       </span>
                     </div>
                     <div className="h-px bg-gray-200" />
@@ -2084,12 +1953,13 @@ const openRefundModal = () => {
                         Total Paid
                       </span>
                       <span className="font-bold text-gray-900 tabular-nums">
-                       {refundData.financial.currency} {refundData.financial.totalAmount + refundData.financial.markup }
+                        {refundData.financial.currency}{" "}
+                        {refundData.financial.totalAmount +
+                          refundData.financial.markup}
                       </span>
                     </div>
                   </div>
 
-                  {/* Refund Conditions */}
                   <div
                     className={cn(
                       "rounded-xl border p-4",
@@ -2160,7 +2030,6 @@ const openRefundModal = () => {
                     )}
                   </div>
 
-                  {/* Change Conditions */}
                   <div
                     className={cn(
                       "rounded-xl border p-4",
@@ -2211,7 +2080,6 @@ const openRefundModal = () => {
                     </div>
                   </div>
 
-                  {/* Cancellation Details */}
                   {refundData.cancellation && (
                     <div className="rounded-xl border border-rose-200 bg-rose-50/30 p-4 space-y-3">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
@@ -2273,7 +2141,6 @@ const openRefundModal = () => {
                     </div>
                   )}
 
-                  {/* Payment Status */}
                   {refundData.payment.awaitingPayment && (
                     <div className="flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50/40 p-3">
                       <Clock className="h-4 w-4 text-amber-500 shrink-0" />
@@ -2296,7 +2163,6 @@ const openRefundModal = () => {
                     </div>
                   )}
 
-                  {/* Passengers */}
                   {refundData.passengers.length > 0 && (
                     <div className="rounded-xl border border-gray-200/70 bg-gray-50/30 p-4">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-3">
@@ -2325,7 +2191,6 @@ const openRefundModal = () => {
                     </div>
                   )}
 
-                  {/* Route Summary */}
                   {refundData.slices.length > 0 && (
                     <div className="rounded-xl border border-gray-200/70 bg-gray-50/30 p-4">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-3">
@@ -2366,7 +2231,6 @@ const openRefundModal = () => {
                     </div>
                   )}
 
-                  {/* Meta Info */}
                   <div className="rounded-xl border border-gray-200/70 bg-gray-50/30 p-3 space-y-1 text-[10px] text-gray-500">
                     <div className="flex justify-between">
                       <span className="font-bold text-gray-600">
@@ -2405,7 +2269,6 @@ const openRefundModal = () => {
                     </div>
                   </div>
 
-                  {/* Refresh Button */}
                   <button
                     onClick={refreshRefundFromAirline}
                     disabled={refundLoading}
@@ -2430,240 +2293,21 @@ const openRefundModal = () => {
         </div>
       )}
 
-      {/* ═══════════════════ ISSUE TICKET MODAL ═══════════════════ */}
-      {issueModalOpen && data && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center px-4 py-4"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.4)" }}
-        >
-          <div
-            className="w-full max-w-md max-h-[90vh] rounded-2xl border border-gray-200/70 bg-white shadow-2xl flex flex-col"
-            style={{ isolation: "isolate" }}
-          >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-gray-50 bg-gray-50/40 px-6 py-4 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-sky-600 shadow-lg">
-                  <TicketCheck className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-[15px] font-bold text-gray-900">
-                    Issue Ticket
-                  </h3>
-                  <p className="text-[11px] text-gray-400">
-                    PNR:{" "}
-                    <span className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-gray-600">
-                      {data.pnr}
-                    </span>
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIssueModalOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-400 transition-all hover:bg-gray-50 hover:text-gray-900 cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div
-              className="flex-1 overflow-y-auto p-6 space-y-4"
-              style={{ WebkitOverflowScrolling: "touch" }}
-            >
-              {/* Amount Summary */}
-              <div className="flex items-center justify-between rounded-xl border border-gray-200/70 bg-gray-50/30 p-4">
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                    Total Amount
-                  </span>
-                  <p className="mt-0.5 text-[11px] text-gray-500">
-                    {paymentMethod === "balance"
-                      ? "Using agency balance"
-                      : paymentMethod === "stripe"
-                        ? "Client pays via Stripe"
-                        : "Charging stored client card"}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-gray-900 tabular-nums">
-                    {data.finance.currency}{" "}
-                    {paymentMethod === "balance"
-                      ? data.finance.duffelTotal
-                      : data.finance.clientTotal}
-                  </p>
-                  <p className="text-[10px] text-gray-400">
-                    Taxes & fees included
-                  </p>
-                </div>
-              </div>
-
-              {/* Payment Methods */}
-              <div className="space-y-3">
-                {/* Stripe */}
-                <div
-                  className={cn(
-                    "relative rounded-xl border-2 transition-all",
-                    paymentMethod === "stripe"
-                      ? "border-sky-500/70 bg-sky-50/30"
-                      : "border-gray-200/70 bg-white hover:border-gray-300 cursor-pointer"
-                  )}
-                  onClick={() => {
-                    if (paymentMethod !== "stripe") {
-                      setPaymentMethod("stripe");
-                    }
-                  }}
-                >
-                  <div className="p-4">
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <div>
-                        <p className="text-[13px] font-bold text-gray-900">
-                          Pay with Stripe
-                        </p>
-                        <p className="text-[11px] text-gray-500 mt-0.5">
-                          Secure card payment with 3D Secure (OTP).
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-gray-900 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-                          STRIPE
-                        </span>
-                        <span className="text-[9px] text-gray-400">
-                          Encrypted • PCI
-                        </span>
-                      </div>
-                    </div>
-
-                    {paymentMethod === "stripe" && (
-                      <div
-                        className="mt-3 space-y-2"
-                        style={{
-                          position: "relative",
-                          zIndex: 99999,
-                          isolation: "isolate",
-                          pointerEvents: "auto",
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onTouchStart={(e) => e.stopPropagation()}
-                        onFocus={(e) => e.stopPropagation()}
-                        onPointerDown={(e) => e.stopPropagation()}
-                      >
-                        <StripeWrapper
-                          amount={Number(data.finance.clientTotal)}
-                          bookingId={data.id as any}
-                          bookRef={data.bookingRef}
-                          cardInfo={{
-                            holderName:
-                              data.paymentSource?.holderName,
-                            cardNumber:
-                              data.paymentSource?.cardNumber,
-                            expiryDate:
-                              data.paymentSource?.expiryDate,
-                            zipCode:
-                              data.paymentSource?.billingAddress
-                                ?.zipCode,
-                          }}
-                          onSuccess={() => {
-                            setIssueModalOpen(false);
-                            fetchBooking();
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Balance */}
-                <div
-                  onClick={() => setPaymentMethod("balance")}
-                  className={cn(
-                    "relative cursor-pointer rounded-xl border-2 transition-all",
-                    paymentMethod === "balance"
-                      ? "border-gray-600/70 bg-gray-50/50"
-                      : "border-gray-200/70 bg-white hover:border-gray-300"
-                  )}
-                >
-                  <div className="flex items-start gap-3 p-4">
-                    <div
-                      className={cn(
-                        "mt-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2",
-                        paymentMethod === "balance"
-                          ? "border-gray-700"
-                          : "border-gray-300"
-                      )}
-                    >
-                      {paymentMethod === "balance" && (
-                        <div className="h-2 w-2 rounded-full bg-gray-700" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="text-[13px] font-bold text-gray-900">
-                            Duffel Balance
-                          </p>
-                          <p className="mt-0.5 text-[11px] text-gray-500">
-                            Deduct from your agency wallet. Ideal for net
-                            fares or corporate bookings.
-                          </p>
-                        </div>
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-500">
-                          <Wallet className="h-4 w-4" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Warning */}
-              <div className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50/70 p-3">
-                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500 mt-0.5" />
-                <p className="text-[11px] leading-relaxed text-amber-900">
-                  Confirming will immediately issue the ticket and charge
-                  the selected source. This cannot be undone — airline
-                  change/refund rules will apply.
-                </p>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="flex items-center justify-end gap-2.5 border-t border-gray-50 bg-gray-50/40 px-6 py-4 shrink-0">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIssueModalOpen(false)}
-                className="h-10 cursor-pointer rounded-xl border-gray-200 px-5 text-[13px] font-semibold text-gray-500 hover:bg-gray-50"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleIssueTicket}
-                disabled={
-                  isProcessing ||
-                  paymentMethod === "stripe" ||
-                  (paymentMethod === "card" && cvv.length < 3)
-                }
-                className="h-10 cursor-pointer rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 px-6 text-[13px] font-bold text-white shadow-2xl shadow-gray-100 transition-all hover:from-gray-900 hover:to-gray-950 hover:shadow-md active:scale-[0.98] disabled:opacity-60"
-              >
-                {isProcessing ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Processing...
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    Confirm & Issue
-                  </span>
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ═══════════════════ ISSUE TICKET MODAL (EXTRACTED) ═══════════════════ */}
+      <IssueTicketModalNew
+        open={issueModalOpen}
+        onClose={() => setIssueModalOpen(false)}
+        onSuccess={() => {
+          setIssueModalOpen(false);
+          fetchBooking();
+        }}
+        bookingId={data.id}
+        bookingRef={data.bookingRef}
+        pnr={data.pnr}
+        finance={data.finance}
+        paymentSource={data.paymentSource}
+      />
+      
     </div>
   );
 }

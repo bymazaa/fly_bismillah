@@ -28,14 +28,13 @@ const PROTECTED_API_ROUTES: RouteConfig[] = [
   { path: '/api/admin/staff/list', roles: ['admin'] },
 
   // ── Staff [id] operations ──
-  // NOTE: Longer paths MUST come before shorter ones (handled by findMatchingRoute sort, but kept ordered here for clarity)
   { path: '/api/admin/staff/:id/logout-all', roles: ['admin', 'editor', 'viewer'] },
   { path: '/api/admin/staff/:id/sessions', roles: ['admin', 'editor', 'viewer'] },
   { path: '/api/admin/staff/:id/unblock', roles: ['admin'] },
   { path: '/api/admin/staff/:id/delete', roles: ['admin'] },
   { path: '/api/admin/staff/:id/block', roles: ['admin'] },
   { path: '/api/admin/staff/:id/update', roles: ['admin', 'editor', 'viewer'] },
-  { path: '/api/admin/staff', roles: ['admin', 'editor', 'viewer'] }, // catch-all for staff — must come LAST
+  { path: '/api/admin/staff', roles: ['admin', 'editor', 'viewer'] },
 
   // ── Profile (all authenticated roles) ──
   { path: '/api/auth/profile/update', roles: ['admin', 'editor', 'viewer'] },
@@ -53,11 +52,13 @@ const PROTECTED_API_ROUTES: RouteConfig[] = [
   // ── Dashboard stats (all authenticated roles) ──
   { path: '/api/dashboard', roles: ['admin', 'editor', 'viewer'] },
 
-  // ── Duffel flight search & booking (all authenticated roles) ──
- // { path: '/api/duffel', roles: ['admin', 'editor', 'viewer'] },
+  // ── Flight issue ticket (admin and editor only) ──
   { path: '/api/flights/issue-ticket', roles: ['admin', 'editor'] },
-  // ── Payments (admin and editor only — viewers cannot initiate payments) ──
-  { path: '/api/stripe', roles: ['admin', 'editor'] },
+
+  // ── Duffel Payment (admin and editor only — viewers cannot initiate payments) ──
+  { path: '/api/duffel/payment-intent', roles: ['admin', 'editor'] },
+  { path: '/api/duffel/confirm-payment', roles: ['admin', 'editor'] },
+  { path: '/api/duffel/booking', roles: ['admin', 'editor'] },
 ];
 
 // Public API routes — no authentication required
@@ -66,10 +67,8 @@ const PUBLIC_API_ROUTES: string[] = [
   '/api/auth/register',
   '/api/auth/forgot-password',
   '/api/auth/reset-password',
-  '/api/auth/verify',
   '/api/public',
-  '/api/webhooks/stripe',  // Stripe webhook must be publicly accessible (signature verified inside handler)
-  '/api/webhooks/duffel',  // Duffel webhook must be publicly accessible (signature verified inside handler)
+  '/api/duffel/webhooks',  // Duffel webhook must be publicly accessible (signature verified inside handler)
 ];
 
 // Auth pages — redirect to dashboard if user is already logged in
@@ -111,7 +110,6 @@ interface AuthResult {
 
 /**
  * Verifies the JWT token using the secret from env.
- * Returns structured auth result including expiry warning and error type.
  */
 async function verifyToken(token: string): Promise<AuthResult> {
   const result: AuthResult = {
@@ -134,7 +132,6 @@ async function verifyToken(token: string): Promise<AuthResult> {
     result.isAuthenticated = true;
     result.payload = payload as AuthPayload;
 
-    // Check if token is expiring within the warning window
     if (payload.exp) {
       const now = Math.floor(Date.now() / 1000);
       result.isExpiringSoon = payload.exp - now < TOKEN_EXPIRY_WARNING;
@@ -156,7 +153,6 @@ async function verifyToken(token: string): Promise<AuthResult> {
 
 /**
  * Finds the most specific matching route config for a given pathname.
- * Sorts by path length descending so longer (more specific) paths win.
  */
 function findMatchingRoute(
   pathname: string,
@@ -175,7 +171,6 @@ function isPublicApiRoute(pathname: string): boolean {
 
 /**
  * Returns true if the user's role is included in the allowed roles list.
- * If no roles are defined on the route, access is open to all authenticated users.
  */
 function hasRequiredRole(
   userRole: string | undefined,
@@ -187,8 +182,7 @@ function hasRequiredRole(
 }
 
 /**
- * Applies a standard set of security headers to a response.
- * Includes CSP, HSTS, XSS protection, and frame options.
+ * Applies security headers to a response.
  */
 function setSecurityHeaders(response: NextResponse): void {
   response.headers.set('X-Frame-Options', 'DENY');
@@ -207,12 +201,18 @@ function setSecurityHeaders(response: NextResponse): void {
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://m.stripe.network",
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https: http: https://pics.avs.io https://*.stripe.com",
-      "font-src 'self' data:",
-      "connect-src 'self' https://api.stripe.com https://m.stripe.network https://q.stripe.com",
-      "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+      // Scripts: self + Duffel payments component (inline for Next.js)
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.duffel.com",
+      // Styles: self + inline (Tailwind/Duffel component styles)
+      "style-src 'self' 'unsafe-inline' https://*.duffel.com",
+      // Images: self + airline logos + Duffel assets
+      "img-src 'self' data: blob: https: http: https://pics.avs.io https://*.duffel.com https://assets.duffel.com",
+      // Fonts
+      "font-src 'self' data: https://*.duffel.com",
+      // API connections: self + Duffel API
+      "connect-src 'self' https://api.duffel.com https://*.duffel.com",
+      // Iframes: Duffel payments 3DS iframe
+      "frame-src 'self' https://*.duffel.com https://api.duffel.com",
       "base-uri 'self'",
       "form-action 'self'",
     ].join('; ')
@@ -220,7 +220,7 @@ function setSecurityHeaders(response: NextResponse): void {
 }
 
 /**
- * Clears the auth cookie from the response (used on expired/invalid token).
+ * Clears the auth cookie from the response.
  */
 function clearAuthCookie(response: NextResponse): void {
   response.cookies.set(COOKIE_NAME, '', {
@@ -233,8 +233,7 @@ function clearAuthCookie(response: NextResponse): void {
 }
 
 /**
- * Creates a redirect response to the given URL with optional query params.
- * Security headers are applied automatically.
+ * Creates a redirect response.
  */
 function createRedirect(
   url: string,
@@ -254,7 +253,6 @@ function createRedirect(
 
 /**
  * Creates a JSON error response for API routes.
- * Defaults to 401 Unauthorized.
  */
 function createApiError(
   message: string,
@@ -276,19 +274,19 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isApiRoute = pathname.startsWith('/api');
 
-  // Skip middleware entirely for Next.js internals and static assets
+  // Skip middleware for Next.js internals and static assets
   if (pathname.startsWith('/_next') || pathname.includes('.')) {
     return NextResponse.next();
   }
 
-  // Allow public API routes through without any auth check
+  // Allow public API routes through without auth
   if (isApiRoute && isPublicApiRoute(pathname)) {
     const response = NextResponse.next();
     setSecurityHeaders(response);
     return response;
   }
 
-  // Attempt to verify the JWT from the cookie
+  // Verify JWT from cookie
   const token = req.cookies.get(COOKIE_NAME)?.value;
   const auth: AuthResult = token
     ? await verifyToken(token)
@@ -306,7 +304,6 @@ export async function middleware(req: NextRequest) {
     const matchedApiRoute = findMatchingRoute(pathname, PROTECTED_API_ROUTES);
 
     if (matchedApiRoute) {
-      // Reject unauthenticated requests with a descriptive error
       if (!auth.isAuthenticated || !auth.payload) {
         const errorMsg =
           auth.error === 'TOKEN_EXPIRED'
@@ -314,11 +311,10 @@ export async function middleware(req: NextRequest) {
             : 'Unauthorized — please login';
 
         const response = createApiError(errorMsg, 401);
-        if (token) clearAuthCookie(response); // Remove invalid/expired cookie
+        if (token) clearAuthCookie(response);
         return response;
       }
 
-      // Reject requests where the user's role is not permitted on this route
       if (!hasRequiredRole(auth.payload.role, matchedApiRoute.roles)) {
         console.warn(
           `[Middleware] API 403: ${auth.payload.email} (${auth.payload.role}) → ${pathname}`
@@ -326,7 +322,6 @@ export async function middleware(req: NextRequest) {
         return createApiError('Forbidden — you do not have permission', 403);
       }
 
-      // Forward verified auth info to the route handler via request headers
       const adminId = auth.payload.id || auth.payload.userId || '';
 
       const response = NextResponse.next({
@@ -343,7 +338,6 @@ export async function middleware(req: NextRequest) {
 
       setSecurityHeaders(response);
 
-      // Signal the client to refresh their token before it expires
       if (auth.isExpiringSoon) {
         response.headers.set('x-token-expiring-soon', 'true');
       }
@@ -351,7 +345,7 @@ export async function middleware(req: NextRequest) {
       return response;
     }
 
-    // Route not in the protected list — allow through with security headers
+    // Route not in protected list — allow through
     const response = NextResponse.next();
     setSecurityHeaders(response);
     return response;
@@ -363,17 +357,15 @@ export async function middleware(req: NextRequest) {
   const matchedPageRoute = findMatchingRoute(pathname, PROTECTED_PAGE_ROUTES);
 
   if (matchedPageRoute) {
-    // Unauthenticated users are redirected to the login page
     if (!auth.isAuthenticated) {
       const response = createRedirect('/access', req, {
-        redirect: pathname, // Preserve intended destination for post-login redirect
+        redirect: pathname,
         ...(auth.error === 'TOKEN_EXPIRED' && { reason: 'session_expired' }),
       });
-      if (token) clearAuthCookie(response); // Clean up invalid/expired cookie
+      if (token) clearAuthCookie(response);
       return response;
     }
 
-    // Authenticated user does not have the required role — send to unauthorized page
     if (!hasRequiredRole(auth.payload?.role, matchedPageRoute.roles)) {
       console.warn(
         `[Middleware] Page 403: ${auth.payload?.email} (${auth.payload?.role}) → ${pathname}`
@@ -383,19 +375,18 @@ export async function middleware(req: NextRequest) {
   }
 
   // ═══════════════════════════════════════════
-  // AUTH ROUTE GUARD (redirect logged-in users away from login/signup pages)
+  // AUTH ROUTE GUARD
   // ═══════════════════════════════════════════
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
 
   if (isAuthRoute && auth.isAuthenticated) {
-    // Honour the redirect param if present, otherwise go to default destination
     const redirectTo =
       req.nextUrl.searchParams.get('redirect') || DEFAULT_REDIRECT;
     return createRedirect(redirectTo, req);
   }
 
   // ═══════════════════════════════════════════
-  // ALLOW REQUEST — attach user context headers if authenticated
+  // ALLOW REQUEST
   // ═══════════════════════════════════════════
   const response = NextResponse.next();
   setSecurityHeaders(response);
@@ -420,7 +411,7 @@ export async function middleware(req: NextRequest) {
 }
 
 // ──────────────────────────────────────────────
-// Matcher — exclude static assets and Next.js internals
+// Matcher
 // ──────────────────────────────────────────────
 
 export const config = {

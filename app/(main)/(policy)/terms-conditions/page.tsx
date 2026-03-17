@@ -12,7 +12,7 @@ import {
 export const metadata = {
   title: "Terms & Conditions | Bismillah Travels and Tour",
   description:
-    "Terms of service for Bismillah Travels and Tour — a USA-based travel agency powered by Duffel and Stripe.",
+    "Terms of service for Bismillah Travels and Tour — a USA-based travel agency powered by Duffel and Duffel.",
 };
 
 export default function TermsConditions() {
@@ -64,21 +64,21 @@ export default function TermsConditions() {
     {
       icon: CreditCard,
       color: "emerald",
-      title: "3. Payments via Stripe",
+      title: "3. Payments via Duffel",
       content: (
         <>
           <p>
             All payments on our platform are securely processed through{" "}
-            <strong>Stripe, Inc.</strong>, a PCI-DSS Level 1 certified payment
+            <strong>Duffel, Inc.</strong>, a PCI-DSS Level 1 certified payment
             processor — the highest level of security in the payments industry.
           </p>
           <ul className="list-none space-y-3 mt-4">
             {[
               "We accept Visa, Mastercard, American Express, Discover, and ACH bank transfers.",
-              "Your full credit/debit card details are never stored on our servers. All sensitive payment data is encrypted and tokenized by Stripe.",
-              "Stripe may perform additional fraud prevention checks (3D Secure, Radar). A temporary authorization hold may appear on your statement during booking.",
+              "Your full credit/debit card details are never stored on our servers. All sensitive payment data is encrypted and tokenized by Duffel.",
+              "Duffel may perform additional fraud prevention checks (3D Secure, Radar). A temporary authorization hold may appear on your statement during booking.",
               "All transactions are in US Dollars (USD). If paying with an international card, your bank may apply currency conversion fees.",
-              "Receipts and invoices are generated through Stripe and delivered to your registered email address.",
+              "Receipts and invoices are generated through Duffel and delivered to your registered email address.",
             ].map((item, i) => (
               <li key={i} className="flex items-start gap-3">
                 <span className="w-5 h-5 bg-emerald-50 rounded-md flex items-center justify-center shrink-0 mt-0.5">
@@ -150,7 +150,7 @@ export default function TermsConditions() {
           cancellations, schedule changes, denied boarding, lost baggage, or any
           third-party service failures. Our services are provided on an
           &quot;as-is&quot; basis. We rely on real-time data from Duffel and
-          payment processing from Stripe — both of which operate under their own
+          payment processing from Duffel — both of which operate under their own
           terms and conditions.
         </p>
       ),
@@ -231,7 +231,7 @@ export default function TermsConditions() {
             </span>
             <span className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-600 text-xs font-bold px-4 py-2 rounded-full shadow-2xl shadow-gray-100">
               <CreditCard className="w-3.5 h-3.5 text-violet-500" />
-              Secured by Stripe
+              Secured by Duffel
             </span>
           </div>
         </div>

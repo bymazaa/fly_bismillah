@@ -234,7 +234,7 @@ const navigation: NavItem[] = [
     icon: "globe",
     children: [
       { id: "duffel-api", label: "Duffel API" },
-      { id: "stripe-integration", label: "Stripe" },
+      { id: "duffel-payment", label: "Duffel Payment" },
       { id: "resend-email", label: "Resend Email" },
       { id: "mongodb-atlas", label: "MongoDB Atlas" },
     ],
@@ -360,7 +360,7 @@ const MiniCard = ({ icon, title, desc, tags }: { icon: IconKey; title: string; d
 );
 
 // ═══════════════════════════════════════════
-// RIGHT SIDEBAR COMPONENT
+// SIDEBAR COMPONENT
 // ═══════════════════════════════════════════
 const Sidebar = ({ activeSection, onNavigate, mobileOpen, onClose }: { activeSection: string; onNavigate: (id: string) => void; mobileOpen: boolean; onClose: () => void }) => {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -377,7 +377,6 @@ const Sidebar = ({ activeSection, onNavigate, mobileOpen, onClose }: { activeSec
 
   const content = (
     <div className="flex flex-col h-full">
-      {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-5 border-b border-zinc-200">
         <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center">
           {icons.plane({ className: "w-4 h-4 text-white" })}
@@ -387,8 +386,6 @@ const Sidebar = ({ activeSection, onNavigate, mobileOpen, onClose }: { activeSec
           <span className="text-[10px] text-zinc-400 font-medium">Documentation</span>
         </div>
       </div>
-
-      {/* Search */}
       <div className="px-3 py-3 border-b border-zinc-100">
         <div className="flex items-center gap-2 px-3 py-2 bg-zinc-100 rounded-md text-zinc-400">
           {icons.search({ className: "w-3.5 h-3.5 flex-shrink-0" })}
@@ -396,35 +393,24 @@ const Sidebar = ({ activeSection, onNavigate, mobileOpen, onClose }: { activeSec
           <kbd className="ml-auto text-[10px] px-1.5 py-0.5 bg-white border border-zinc-200 rounded text-zinc-400 font-mono">⌘K</kbd>
         </div>
       </div>
-
-      {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-3 px-2">
         {navigation.map((group) => {
           const Icon = icons[group.icon || "folder"];
           const isExpanded = expanded[group.id] ?? false;
           const isActive = group.children?.some((c) => c.id === activeSection);
-
           return (
             <div key={group.id} className="mb-0.5">
-              <button
-                onClick={() => toggle(group.id)}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-left transition-colors text-sm ${isActive ? "text-zinc-900 font-semibold bg-zinc-100" : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50"}`}
-              >
+              <button onClick={() => toggle(group.id)} className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-left transition-colors text-sm ${isActive ? "text-zinc-900 font-semibold bg-zinc-100" : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50"}`}>
                 <Icon className="w-4 h-4 flex-shrink-0 opacity-60" />
                 <span className="flex-1">{group.label}</span>
                 <span className={`transition-transform duration-200 ${isExpanded ? "rotate-0" : "-rotate-90"}`}>
                   {icons.chevronDown({ className: "w-3.5 h-3.5 opacity-40" })}
                 </span>
               </button>
-
               {isExpanded && group.children && (
                 <div className="ml-4 pl-3 border-l border-zinc-200 mt-0.5 mb-1.5">
                   {group.children.map((child) => (
-                    <button
-                      key={child.id}
-                      onClick={() => { onNavigate(child.id); onClose(); }}
-                      className={`w-full text-left px-3 py-1.5 rounded-md text-[13px] transition-colors block ${activeSection === child.id ? "text-zinc-900 font-semibold bg-zinc-100" : "text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50"}`}
-                    >
+                    <button key={child.id} onClick={() => { onNavigate(child.id); onClose(); }} className={`w-full text-left px-3 py-1.5 rounded-md text-[13px] transition-colors block ${activeSection === child.id ? "text-zinc-900 font-semibold bg-zinc-100" : "text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50"}`}>
                       {child.label}
                     </button>
                   ))}
@@ -434,8 +420,6 @@ const Sidebar = ({ activeSection, onNavigate, mobileOpen, onClose }: { activeSec
           );
         })}
       </nav>
-
-      {/* Footer */}
       <div className="px-4 py-4 border-t border-zinc-100">
         <a href="https://flybismillah.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-zinc-500 hover:text-zinc-900 transition-colors">
           {icons.globe({ className: "w-3.5 h-3.5" })}
@@ -448,12 +432,7 @@ const Sidebar = ({ activeSection, onNavigate, mobileOpen, onClose }: { activeSec
 
   return (
     <>
-      {/* Desktop — RIGHT side */}
-      <aside className="hidden lg:flex w-64 flex-shrink-0 border-l border-zinc-200 bg-white fixed top-0 right-0 bottom-0 z-40 flex-col">
-        {content}
-      </aside>
-
-      {/* Mobile overlay — slides from RIGHT */}
+      <aside className="hidden lg:flex w-64 flex-shrink-0 border-l border-zinc-200 bg-white fixed top-0 right-0 bottom-0 z-40 flex-col">{content}</aside>
       {mobileOpen && (
         <>
           <div className="lg:hidden fixed inset-0 bg-black/40 z-40 backdrop-blur-sm" onClick={onClose} />
@@ -470,7 +449,7 @@ const Sidebar = ({ activeSection, onNavigate, mobileOpen, onClose }: { activeSec
 };
 
 // ═══════════════════════════════════════════
-// CONTENT SECTIONS
+// CONTENT HELPERS
 // ═══════════════════════════════════════════
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
   <h2 className="text-2xl font-bold text-zinc-900 tracking-tight mb-1">{children}</h2>
@@ -485,7 +464,8 @@ const Divider = () => <hr className="border-zinc-200 my-10" />;
 // ═══════════════════════════════════════════
 const DocsContent = () => (
   <div className="prose-zinc max-w-none">
-    {/* ===== GETTING STARTED ===== */}
+
+    {/* ===== INTRODUCTION ===== */}
     <section id="introduction">
       <div className="flex items-center gap-2 mb-4">
         <Badge variant="success">Live Project</Badge>
@@ -494,12 +474,10 @@ const DocsContent = () => (
       <SectionTitle>Introduction</SectionTitle>
       <SectionSub>What Fly Bismillah is and why it exists</SectionSub>
       <p className="text-zinc-600 text-sm leading-relaxed mb-4">
-        <strong>Fly Bismillah</strong> is a modern B2C online travel agency platform. It provides real-time
-        global flight search, booking, ticket hold (Pay Later) and instant ticket issuance — all fully automated.
+        <strong>Fly Bismillah</strong> is a modern B2C online travel agency platform. It provides real-time global flight search, booking, ticket hold (Pay Later) and instant ticket issuance — all fully automated.
       </p>
       <p className="text-zinc-600 text-sm leading-relaxed mb-6">
-        Built on <strong>Duffel API</strong> with access to 500+ airlines worldwide, the platform handles
-        everything from search to e-ticket delivery with zero manual steps.
+        Built on <strong>Duffel API</strong> with access to 500+ airlines worldwide, the platform handles everything from search to e-ticket delivery with zero manual steps.
       </p>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {[
@@ -522,6 +500,7 @@ const DocsContent = () => (
 
     <Divider />
 
+    {/* ===== INSTALLATION ===== */}
     <section id="installation">
       <SectionTitle>Installation</SectionTitle>
       <SectionSub>Set up the project locally in under 5 minutes</SectionSub>
@@ -547,13 +526,14 @@ pnpm dev`} />
 
     <Divider />
 
+    {/* ===== ENV SETUP ===== */}
     <section id="env-setup">
       <SectionTitle>Environment Setup</SectionTitle>
       <SectionSub>All required environment variables for the platform</SectionSub>
       <CodeBlock language="env" code={`# Database
 DATABASE_URL="mongodb+srv://user:pass@cluster.mongodb.net/flybismillah"
 
-# Duffel Flight API
+# Duffel Flight API & Payments
 DUFFEL_ACCESS_TOKEN="duffel_test_xxxxxx"
 DUFFEL_WEBHOOK_SECRET="whsec_xxxxxx"
 
@@ -561,10 +541,8 @@ DUFFEL_WEBHOOK_SECRET="whsec_xxxxxx"
 RESEND_API_KEY="re_xxxxxx"
 ADMIN_EMAIL="admin@flybismillah.com"
 
-# Payment (Stripe)
-STRIPE_SECRET_KEY="sk_test_xxxxxx"
-STRIPE_PUBLISHABLE_KEY="pk_test_xxxxxx"
-STRIPE_WEBHOOK_SECRET="whsec_xxxxxx"
+# Card Encryption
+ENCRYPTION_KEY="your-32-char-encryption-key-here"
 
 # Auth
 JWT_SECRET="your-secret-key-here"
@@ -580,6 +558,7 @@ NODE_ENV="production"`} />
 
     <Divider />
 
+    {/* ===== FLIGHT SEARCH ===== */}
     <section id="flight-search">
       <SectionTitle>Flight Search</SectionTitle>
       <SectionSub>Real-time global flight search across 500+ airlines</SectionSub>
@@ -599,6 +578,7 @@ NODE_ENV="production"`} />
 
     <Divider />
 
+    {/* ===== BOOKING SYSTEM ===== */}
     <section id="booking-system">
       <SectionTitle>Booking System</SectionTitle>
       <SectionSub>Hold booking and instant issuance workflow</SectionSub>
@@ -632,34 +612,69 @@ NODE_ENV="production"`} />
 
     <Divider />
 
+    {/* ===== PAYMENT & PRICING ===== */}
     <section id="payment">
       <SectionTitle>Payment & Pricing</SectionTitle>
-      <SectionSub>Revenue model with admin markup and gateway fees</SectionSub>
+      <SectionSub>Revenue model with admin markup and dual payment methods</SectionSub>
+      <div className="grid sm:grid-cols-2 gap-3 mb-6">
+        <div className="border border-zinc-200 rounded-lg p-5">
+          <div className="flex items-center gap-2 mb-3">
+            {icons.card({ className: "w-5 h-5 text-sky-500" })}
+            <h4 className="font-semibold text-zinc-900">Duffel Card Payment</h4>
+          </div>
+          <p className="text-zinc-500 text-sm leading-relaxed mb-3">Secure card payment via Duffel Payment Intent with 3D Secure support.</p>
+          <ul className="space-y-1.5 text-xs text-zinc-500">
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-sky-400" /> PCI DSS Level 1 Compliant</li>
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-sky-400" /> 3D Secure (SCA) Ready</li>
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-sky-400" /> 256-bit Encryption</li>
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-sky-400" /> Customer card details stored encrypted</li>
+          </ul>
+        </div>
+        <div className="border border-zinc-200 rounded-lg p-5">
+          <div className="flex items-center gap-2 mb-3">
+            {icons.shield({ className: "w-5 h-5 text-emerald-500" })}
+            <h4 className="font-semibold text-zinc-900">Duffel Balance</h4>
+          </div>
+          <p className="text-zinc-500 text-sm leading-relaxed mb-3">Deduct from agency wallet. Ideal for net fares and corporate bookings.</p>
+          <ul className="space-y-1.5 text-xs text-zinc-500">
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> No card required</li>
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Instant processing</li>
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Lower transaction costs</li>
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Best for high-volume agents</li>
+          </ul>
+        </div>
+      </div>
       <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-5 mb-6">
         <h4 className="font-semibold text-zinc-900 text-sm mb-4">💰 Pricing Formula</h4>
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between"><span className="text-zinc-500">Airline Net Fare</span><span className="font-mono text-zinc-700">Base Price</span></div>
+          <div className="flex justify-between"><span className="text-zinc-500">Airline Net Fare</span><span className="font-mono text-zinc-700">Base Price (Duffel)</span></div>
           <div className="flex justify-between"><span className="text-zinc-500">+ Admin Markup</span><span className="font-mono text-emerald-600">Your Profit</span></div>
-          <div className="flex justify-between"><span className="text-zinc-500">+ Gateway Fee</span><span className="font-mono text-amber-600">Processing</span></div>
           <div className="border-t border-dashed border-zinc-300 pt-2 mt-2">
             <div className="flex justify-between font-semibold"><span className="text-zinc-900">= Sell Price to Customer</span><span className="font-mono text-zinc-900">Total</span></div>
           </div>
         </div>
       </div>
-      <CodeBlock language="text" code={`Profit = Sell Price - (Airline Net Fare + Gateway Fee)
+      <CodeBlock language="text" code={`Profit = Sell Price - Airline Net Fare
 
 Example:
   Net Fare:    $500  (from Duffel)
   Markup:      $30   (your profit)
-  Gateway:     $15   (Stripe fee)
   ─────────────────
-  Sell Price:  $545  (charged to customer)
+  Sell Price:  $530  (charged to customer)
   Your Profit: $30`} />
+      <h3 className="font-semibold text-zinc-900 text-base mb-3 mt-6">Payment Flow</h3>
+      <StepList steps={[
+        { title: "Admin selects payment method", desc: "Choose between Duffel Card Payment or Duffel Balance from the issue ticket modal." },
+        { title: "Card: Payment Intent created", desc: "API creates a Duffel Payment Intent, returns client token. DuffelPayments component renders card form." },
+        { title: "Card: Customer pays with 3DS", desc: "Card details entered in PCI-compliant form. 3D Secure verification handled automatically by Duffel." },
+        { title: "Payment confirmed → Ticket issued", desc: "After payment capture, the system calls issue-ticket API. E-ticket is generated and emailed automatically." },
+      ]} />
       <Callout type="info">Refunds are processed back to the original payment method. Airline penalties are deducted. Service markup is retained as revenue.</Callout>
     </section>
 
     <Divider />
 
+    {/* ===== EMAIL SYSTEM ===== */}
     <section id="email-system">
       <SectionTitle>Email System</SectionTitle>
       <SectionSub>Automated transactional emails via Resend + React Email</SectionSub>
@@ -676,10 +691,11 @@ Example:
 
     <Divider />
 
+    {/* ===== WEBHOOK SYSTEM ===== */}
     <section id="webhook-system">
       <SectionTitle>Webhook System</SectionTitle>
-      <SectionSub>Real-time event processing from Duffel and Stripe</SectionSub>
-      <Callout type="tip" title="How it works">Webhooks are HTTP callbacks from Duffel/Stripe to your server. They notify about events like booking creation, ticket issuance, and schedule changes automatically.</Callout>
+      <SectionSub>Real-time event processing from Duffel</SectionSub>
+      <Callout type="tip" title="How it works">Webhooks are HTTP callbacks from Duffel to your server. They notify about events like booking creation, ticket issuance, and schedule changes automatically.</Callout>
       <h3 className="font-semibold text-zinc-900 text-base mb-3 mt-6">Duffel Webhook Events</h3>
       <Table headers={["Event", "Action", "Status"]} rows={[
         ["`order.created`", "Save booking to DB, send confirmation email", "✅ Active"],
@@ -692,11 +708,13 @@ Example:
         <li className="flex items-start gap-2">{icons.shield({ className: "w-4 h-4 text-zinc-400 mt-0.5 flex-shrink-0" })}<span><strong>HMAC-SHA256</strong> signature verification on every webhook request</span></li>
         <li className="flex items-start gap-2">{icons.shield({ className: "w-4 h-4 text-zinc-400 mt-0.5 flex-shrink-0" })}<span><strong>x-duffel-signature</strong> header validated against webhook secret</span></li>
         <li className="flex items-start gap-2">{icons.shield({ className: "w-4 h-4 text-zinc-400 mt-0.5 flex-shrink-0" })}<span>Crash-proof error handling with graceful fallbacks</span></li>
+        <li className="flex items-start gap-2">{icons.shield({ className: "w-4 h-4 text-zinc-400 mt-0.5 flex-shrink-0" })}<span>Duplicate event detection prevents double-processing</span></li>
       </ul>
     </section>
 
     <Divider />
 
+    {/* ===== ADMIN DASHBOARD ===== */}
     <section id="admin-dashboard">
       <SectionTitle>Admin Dashboard</SectionTitle>
       <SectionSub>Backend management interface for platform operators</SectionSub>
@@ -712,22 +730,22 @@ Example:
 
     <Divider />
 
+    {/* ===== BOOKING MANAGEMENT ===== */}
     <section id="booking-management">
       <SectionTitle>Booking Management</SectionTitle>
       <SectionSub>Complete booking lifecycle from hold to completion</SectionSub>
       <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-5 mb-6">
         <h4 className="font-semibold text-zinc-900 text-sm mb-3">Booking Status Flow</h4>
         <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
-          <Badge variant="warning">pending</Badge><span className="text-zinc-400">→</span>
+          <Badge variant="warning">processing</Badge><span className="text-zinc-400">→</span>
           <Badge variant="default">held</Badge><span className="text-zinc-400">→</span>
-          <Badge variant="success">confirmed</Badge><span className="text-zinc-400">→</span>
-          <Badge variant="success">ticketed</Badge>
+          <Badge variant="success">issued</Badge>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs font-mono mt-2">
           <span className="text-zinc-400">or</span>
           <Badge variant="danger">cancelled</Badge><span className="text-zinc-400">/</span>
           <Badge variant="danger">expired</Badge><span className="text-zinc-400">/</span>
-          <Badge variant="warning">refunded</Badge>
+          <Badge variant="danger">failed</Badge>
         </div>
       </div>
       <Table headers={["Action", "Who", "When"]} rows={[
@@ -741,6 +759,7 @@ Example:
 
     <Divider />
 
+    {/* ===== STAFF MANAGEMENT ===== */}
     <section id="staff-management">
       <SectionTitle>Staff Management</SectionTitle>
       <SectionSub>Create and manage admin accounts from dashboard or CLI</SectionSub>
@@ -755,12 +774,6 @@ Example:
         ["`role`", "Enum", "admin / editor / viewer"],
         ["`status`", "Enum", "active / blocked / suspended"],
         ["`permissions`", "Object", "Granular access control per module"],
-        ["`lastLogin`", "Date", "Last successful login timestamp"],
-        ["`isOnline`", "Boolean", "Real-time online status"],
-        ["`activeSessions`", "Array", "Current active sessions with device info"],
-        ["`loginHistory`", "Array", "Login audit trail"],
-        ["`isTwoFactorEnabled`", "Boolean", "2FA status"],
-        ["`blockReason`", "String", "Why admin was blocked (if applicable)"],
       ]} />
       <h3 className="font-semibold text-zinc-900 text-base mb-3 mt-6">Staff Operations</h3>
       <div className="grid sm:grid-cols-2 gap-3">
@@ -776,18 +789,15 @@ Example:
 
     <Divider />
 
+    {/* ===== ROLES & PERMISSIONS ===== */}
     <section id="roles-permissions">
       <SectionTitle>Roles & Permissions</SectionTitle>
       <SectionSub>Granular access control with three role levels</SectionSub>
       <Table headers={["Module", "Admin", "Editor", "Viewer"]} rows={[
         ["Dashboard", "✅ Full", "✅ Full", "✅ Full"],
         ["Bookings", "✅ Full", "✏️ Edit", "👁 View"],
-        ["Transactions", "✅ Full", "❌ None", "❌ None"],
         ["Customers", "✅ Full", "✅ Full", "❌ None"],
-        ["Destinations", "✅ Full", "✏️ Edit", "👁 View"],
-        ["Packages", "✅ Full", "✏️ Edit", "👁 View"],
-        ["Offers", "✅ Full", "✏️ Edit", "👁 View"],
-        ["Support", "✅ Full", "✅ Full", "❌ None"],
+        ["Payments", "✅ Full", "✅ Full", "❌ None"],
         ["Settings", "✅ Full", "❌ None", "❌ None"],
       ]} />
       <Callout type="tip">Permission levels: <strong>full</strong> (read + write + delete), <strong>edit</strong> (read + write), <strong>view</strong> (read only), <strong>none</strong> (no access).</Callout>
@@ -795,6 +805,7 @@ Example:
 
     <Divider />
 
+    {/* ===== CLI OVERVIEW ===== */}
     <section id="cli-overview">
       <SectionTitle>CLI Tool Overview</SectionTitle>
       <SectionSub>Windows batch script for server management and admin operations</SectionSub>
@@ -823,6 +834,7 @@ Example:
 
     <Divider />
 
+    {/* ===== CLI COMMANDS ===== */}
     <section id="cli-commands">
       <SectionTitle>CLI Menu Options</SectionTitle>
       <SectionSub>Main menu of the start.bat launcher</SectionSub>
@@ -834,46 +846,28 @@ Example:
         ["[5]", "Server + Admin CLI", "Start server in background, then open Admin CLI"],
         ["[0]", "Exit", "Close the launcher"],
       ]} />
-      <h3 className="font-semibold text-zinc-900 text-base mb-3 mt-6">Auto System Checks</h3>
-      <p className="text-zinc-600 text-sm mb-3">On launch, the script automatically verifies:</p>
-      <ul className="space-y-1.5 text-sm text-zinc-600 mb-4">
-        <li className="flex items-center gap-2">{icons.check({ className: "w-4 h-4 text-emerald-500" })} Node.js is installed and accessible</li>
-        <li className="flex items-center gap-2">{icons.check({ className: "w-4 h-4 text-emerald-500" })} Package manager detected (pnpm preferred, npm fallback)</li>
-        <li className="flex items-center gap-2">{icons.check({ className: "w-4 h-4 text-emerald-500" })} Dependencies installed (<code className="text-xs bg-zinc-100 px-1 rounded">node_modules</code>)</li>
-        <li className="flex items-center gap-2">{icons.check({ className: "w-4 h-4 text-emerald-500" })} Project built (<code className="text-xs bg-zinc-100 px-1 rounded">.next</code> folder)</li>
-      </ul>
     </section>
 
     <Divider />
 
+    {/* ===== CLI ADMIN OPS ===== */}
     <section id="cli-admin-ops">
       <SectionTitle>CLI Admin Operations</SectionTitle>
       <SectionSub>Interactive admin management directly from the command line</SectionSub>
-      <p className="text-zinc-600 text-sm leading-relaxed mb-4">
-        The Admin CLI connects directly to MongoDB (using your <code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded">DATABASE_URL</code>) and provides full CRUD operations without needing the web server running.
-      </p>
       <Table headers={["Option", "Operation", "Details"]} rows={[
-        ["[1]", "➕ Create Admin", "Name, email, password (with strength check), phone, role selection"],
-        ["[2]", "📋 List All", "All admins with online status, role badges, login timestamps"],
-        ["[3]", "🔍 Search", "Search by name, email, or admin ID with fuzzy matching"],
-        ["[4]", "✏️ Update", "Change name, phone, email, or role with validation"],
-        ["[5]", "🗑️ Delete", "Double confirmation required (Admin ID + type DELETE)"],
+        ["[1]", "➕ Create Admin", "Name, email, password, phone, role selection"],
+        ["[2]", "📋 List All", "All admins with online status, role badges"],
+        ["[3]", "🔍 Search", "Search by name, email, or admin ID"],
+        ["[4]", "✏️ Update", "Change name, phone, email, or role"],
+        ["[5]", "🗑️ Delete", "Double confirmation required"],
         ["[6]", "🚫 Block/Unblock", "Block with reason, unblock with session reset"],
-        ["[7]", "🔑 Reset Password", "New password with strength validation, clears sessions"],
+        ["[7]", "🔑 Reset Password", "New password with strength validation"],
       ]} />
-      <h3 className="font-semibold text-zinc-900 text-base mb-3 mt-6">Security Features</h3>
-      <ul className="space-y-1.5 text-sm text-zinc-600">
-        <li className="flex items-center gap-2">{icons.shield({ className: "w-4 h-4 text-zinc-400" })} Password input is masked (hidden with <code className="text-xs bg-zinc-100 px-1 rounded">*</code> characters)</li>
-        <li className="flex items-center gap-2">{icons.shield({ className: "w-4 h-4 text-zinc-400" })} Password strength enforcement: min 6 chars, uppercase, lowercase, number</li>
-        <li className="flex items-center gap-2">{icons.shield({ className: "w-4 h-4 text-zinc-400" })} Bcrypt hashing with 12 salt rounds</li>
-        <li className="flex items-center gap-2">{icons.shield({ className: "w-4 h-4 text-zinc-400" })} Cannot delete the last admin account</li>
-        <li className="flex items-center gap-2">{icons.shield({ className: "w-4 h-4 text-zinc-400" })} MongoDB URI masked in console output</li>
-        <li className="flex items-center gap-2">{icons.shield({ className: "w-4 h-4 text-zinc-400" })} Graceful Ctrl+C handling with DB disconnect</li>
-      </ul>
     </section>
 
     <Divider />
 
+    {/* ===== TECH STACK ===== */}
     <section id="tech-stack">
       <SectionTitle>Tech Stack</SectionTitle>
       <SectionSub>All technologies, frameworks and tools used</SectionSub>
@@ -882,9 +876,9 @@ Example:
           { cat: "Frontend", items: ["Next.js 14 (App Router)", "React 18", "Tailwind CSS", "TypeScript"] },
           { cat: "Backend", items: ["Next.js API Routes", "Server Components", "Middleware", "JWT Auth"] },
           { cat: "Database", items: ["MongoDB Atlas", "Mongoose ODM", "Indexed queries"] },
-          { cat: "Services", items: ["Duffel API", "Stripe", "Resend", "React Email"] },
+          { cat: "Services", items: ["Duffel API (Flights)", "Duffel Payments (Card)", "Resend (Email)", "React Email"] },
           { cat: "DevOps", items: ["Vercel Edge", "GitHub Actions", "pnpm", "ESLint"] },
-          { cat: "Security", items: ["HMAC-SHA256", "Bcrypt", "CORS", "Rate limiting"] },
+          { cat: "Security", items: ["HMAC-SHA256", "Bcrypt", "AES-256-CBC", "Rate limiting", "3D Secure"] },
         ].map((group) => (
           <div key={group.cat} className="border border-zinc-200 rounded-lg p-4">
             <h4 className="font-semibold text-zinc-900 text-sm mb-2">{group.cat}</h4>
@@ -902,6 +896,7 @@ Example:
 
     <Divider />
 
+    {/* ===== SYSTEM FLOW ===== */}
     <section id="system-flow">
       <SectionTitle>System Flow</SectionTitle>
       <SectionSub>How data flows through the platform</SectionSub>
@@ -911,7 +906,7 @@ Example:
             { e: "👤", l: "Customer", s: "Search → Select → Book" },
             { e: "⚡", l: "Next.js App", s: "SSR + API Routes + Auth" },
             { e: "✈️", l: "Duffel API", s: "Flight data + Booking + Ticketing" },
-            { e: "💳", l: "Stripe", s: "Payment processing" },
+            { e: "💳", l: "Duffel Payments", s: "Card payment + 3D Secure" },
             { e: "🗄️", l: "MongoDB", s: "Data persistence" },
             { e: "📧", l: "Resend", s: "Automated emails" },
             { e: "🔔", l: "Webhooks", s: "Real-time event handling" },
@@ -931,22 +926,23 @@ Example:
 
     <Divider />
 
+    {/* ===== DATABASE SCHEMA ===== */}
     <section id="database-schema">
       <SectionTitle>Database Schema</SectionTitle>
       <SectionSub>MongoDB collections and their structure</SectionSub>
       <Table headers={["Collection", "Purpose", "Key Fields"]} rows={[
         ["admins", "Staff accounts", "name, email, role, permissions, adminId"],
-        ["bookings", "Flight reservations", "pnr, route, passengers, status, duffelOrderId"],
-        ["transactions", "Payment records", "amount, stripeId, bookingRef, status"],
+        ["bookings", "Flight reservations", "pnr, passengers, status, duffelOrderId, duffelPaymentIntentId"],
         ["customers", "End user accounts", "name, email, phone, passportInfo"],
         ["destinations", "Searchable locations", "city, country, airportCode, iata"],
         ["notifications", "System alerts", "type, message, read, adminId"],
       ]} />
-      <Callout type="info">All collections use Mongoose ODM with timestamps enabled (<code className="text-xs bg-blue-100 px-1 rounded">createdAt</code>, <code className="text-xs bg-blue-100 px-1 rounded">updatedAt</code>).</Callout>
+      <Callout type="info">All collections use Mongoose ODM with timestamps enabled. Card numbers are stored AES-256-CBC encrypted.</Callout>
     </section>
 
     <Divider />
 
+    {/* ===== API ROUTES ===== */}
     <section id="api-routes">
       <SectionTitle>API Routes</SectionTitle>
       <SectionSub>Next.js API endpoints</SectionSub>
@@ -956,18 +952,22 @@ Example:
         ["`/api/bookings/create`", "POST", "Auth", "Create a booking/hold"],
         ["`/api/bookings/[id]`", "GET", "Auth", "Get booking details"],
         ["`/api/bookings/cancel`", "POST", "Admin", "Cancel a booking"],
-        ["`/api/bookings/issue`", "POST", "Admin", "Issue ticket from hold"],
-        ["`/api/payments/create`", "POST", "Auth", "Create payment intent"],
+        ["`/api/flights/issue-ticket`", "POST", "Admin", "Issue ticket (balance or card)"],
+        ["`/api/duffel/payment-intent`", "POST", "Admin", "Create Duffel Payment Intent"],
+        ["`/api/duffel/confirm-payment`", "POST", "Admin", "Confirm card payment intent"],
+        ["`/api/dashboard/bookings`", "GET", "Auth", "List all bookings"],
+        ["`/api/dashboard/bookings/[id]`", "GET", "Auth", "Booking detail with sync"],
+        ["`/api/dashboard/bookings/[id]/refund`", "GET", "Admin", "Fetch refund info"],
         ["`/api/webhooks/duffel`", "POST", "Webhook", "Duffel event handler"],
-        ["`/api/webhooks/stripe`", "POST", "Webhook", "Stripe event handler"],
-        ["`/api/admin/login`", "POST", "Public", "Admin authentication"],
-        ["`/api/admin/admins`", "GET/POST", "Admin", "List/Create admins"],
-        ["`/api/admin/admins/[id]`", "PATCH/DELETE", "Admin", "Update/Delete admin"],
+        ["`/api/auth/login`", "POST", "Public", "Admin authentication"],
+        ["`/api/admin/staff`", "GET/POST", "Admin", "List/Create staff"],
+        ["`/api/admin/staff/[id]`", "PATCH/DELETE", "Admin", "Update/Delete staff"],
       ]} />
     </section>
 
     <Divider />
 
+    {/* ===== DUFFEL API ===== */}
     <section id="duffel-api">
       <SectionTitle>Duffel API</SectionTitle>
       <SectionSub>Flight search, booking and ticketing engine</SectionSub>
@@ -981,18 +981,58 @@ Example:
 
     <Divider />
 
-    <section id="stripe-integration">
-      <SectionTitle>Stripe Integration</SectionTitle>
-      <SectionSub>Secure payment processing</SectionSub>
+    {/* ===== DUFFEL PAYMENT ===== */}
+    <section id="duffel-payment">
+      <SectionTitle>Duffel Payment</SectionTitle>
+      <SectionSub>Secure card payment processing via Duffel Payment Intents</SectionSub>
+      <p className="text-zinc-600 text-sm leading-relaxed mb-4">
+        Duffel Payments provides a PCI-compliant card payment solution built directly into the Duffel platform. No separate payment gateway needed — card payments and flight ticketing happen in one unified flow.
+      </p>
+      <div className="grid sm:grid-cols-2 gap-3 mb-6">
+        <MiniCard icon="card" title="Payment Intent" desc="Create a payment intent via API, get a client token for the frontend component." tags={["Server-side", "API"]} />
+        <MiniCard icon="shield" title="3D Secure" desc="Automatic SCA compliance with bank verification handled by Duffel." tags={["SCA", "PSD2"]} />
+        <MiniCard icon="code" title="@duffel/components" desc="Pre-built React component renders a secure card form. PCI DSS Level 1." tags={["React", "PCI"]} />
+        <MiniCard icon="bolt" title="Instant Capture" desc="Payment captured → ticket issued → email sent. All in one flow." tags={["Automated"]} />
+      </div>
+      <h3 className="font-semibold text-zinc-900 text-base mb-3 mt-6">Payment Flow</h3>
+      <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-5 mb-6">
+        <div className="flex flex-col items-center space-y-3 text-sm">
+          {[
+            { e: "1️⃣", l: "Create Payment Intent", s: "POST /api/duffel/payment-intent → returns clientToken" },
+            { e: "2️⃣", l: "Render DuffelPayments", s: "@duffel/components renders secure card form" },
+            { e: "3️⃣", l: "Customer Enters Card", s: "Card details never touch your server (PCI compliant)" },
+            { e: "4️⃣", l: "3D Secure Verification", s: "Bank authentication popup handled by Duffel" },
+            { e: "5️⃣", l: "Payment Confirmed", s: "onSuccessfulPayment callback fires" },
+            { e: "6️⃣", l: "Confirm + Issue Ticket", s: "POST /api/duffel/confirm-payment → POST /api/flights/issue-ticket" },
+          ].map((item, i, arr) => (
+            <React.Fragment key={item.l}>
+              <div className="w-full max-w-md bg-white border border-zinc-200 rounded-lg p-3 text-center hover:border-zinc-300 transition-colors">
+                <span className="text-lg mr-2">{item.e}</span>
+                <span className="font-semibold text-zinc-900">{item.l}</span>
+                <span className="text-zinc-400 text-xs block mt-0.5">{item.s}</span>
+              </div>
+              {i < arr.length - 1 && <div className="w-px h-3 bg-zinc-300" />}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+      <h3 className="font-semibold text-zinc-900 text-base mb-3">Environment Variables</h3>
       <Table headers={["Variable", "Purpose"]} rows={[
-        ["`STRIPE_SECRET_KEY`", "Server-side API key"],
-        ["`STRIPE_PUBLISHABLE_KEY`", "Client-side key for Stripe Elements"],
-        ["`STRIPE_WEBHOOK_SECRET`", "Payment event verification"],
+        ["`DUFFEL_ACCESS_TOKEN`", "API key for creating payment intents (same token as flights)"],
       ]} />
+      <h3 className="font-semibold text-zinc-900 text-base mb-3 mt-6">Two Payment Methods</h3>
+      <Table headers={["Method", "How It Works", "Best For"]} rows={[
+        ["Duffel Card", "Customer card → Payment Intent → 3DS → Capture", "B2C direct customer payments"],
+        ["Duffel Balance", "Agency wallet deduction → Instant payment", "B2B, corporate, net fare bookings"],
+      ]} />
+      <Callout type="info" title="No Separate Gateway">
+        Unlike traditional setups, Duffel Payments is built into the flight booking platform. One API token handles both flights and payments. Card details are encrypted with AES-256-CBC on your server for reference only.
+      </Callout>
     </section>
 
     <Divider />
 
+    {/* ===== RESEND EMAIL ===== */}
     <section id="resend-email">
       <SectionTitle>Resend Email</SectionTitle>
       <SectionSub>Transactional email service with React Email templates</SectionSub>
@@ -1004,6 +1044,7 @@ Example:
 
     <Divider />
 
+    {/* ===== MONGODB ATLAS ===== */}
     <section id="mongodb-atlas">
       <SectionTitle>MongoDB Atlas</SectionTitle>
       <SectionSub>Cloud database with auto-scaling</SectionSub>
@@ -1014,6 +1055,7 @@ Example:
 
     <Divider />
 
+    {/* ===== VERCEL DEPLOY ===== */}
     <section id="vercel-deploy">
       <SectionTitle>Vercel Deployment</SectionTitle>
       <SectionSub>Edge deployment with auto CI/CD from GitHub</SectionSub>
@@ -1027,18 +1069,17 @@ Example:
 
     <Divider />
 
+    {/* ===== ENV REFERENCE ===== */}
     <section id="env-reference">
       <SectionTitle>Environment Variables Reference</SectionTitle>
       <SectionSub>Complete list of all required environment variables</SectionSub>
       <Table headers={["Variable", "Required", "Service"]} rows={[
         ["`DATABASE_URL`", "✅ Yes", "MongoDB Atlas"],
-        ["`DUFFEL_ACCESS_TOKEN`", "✅ Yes", "Duffel API"],
+        ["`DUFFEL_ACCESS_TOKEN`", "✅ Yes", "Duffel API + Payments"],
         ["`DUFFEL_WEBHOOK_SECRET`", "✅ Yes", "Duffel Webhooks"],
+        ["`ENCRYPTION_KEY`", "✅ Yes", "Card Number Encryption"],
         ["`RESEND_API_KEY`", "✅ Yes", "Email Service"],
         ["`ADMIN_EMAIL`", "✅ Yes", "Email Sender"],
-        ["`STRIPE_SECRET_KEY`", "✅ Yes", "Payment"],
-        ["`STRIPE_PUBLISHABLE_KEY`", "✅ Yes", "Payment (Client)"],
-        ["`STRIPE_WEBHOOK_SECRET`", "✅ Yes", "Payment Webhooks"],
         ["`JWT_SECRET`", "✅ Yes", "Authentication"],
         ["`NEXTAUTH_SECRET`", "✅ Yes", "Session"],
         ["`NEXT_PUBLIC_APP_URL`", "✅ Yes", "App Config"],
@@ -1047,6 +1088,7 @@ Example:
 
     <Divider />
 
+    {/* ===== DOMAIN & DNS ===== */}
     <section id="domain-dns">
       <SectionTitle>Domain & DNS</SectionTitle>
       <SectionSub>Domain configuration and email authentication</SectionSub>
@@ -1061,18 +1103,20 @@ Example:
 
     <Divider />
 
+    {/* ===== CURRENT STATUS ===== */}
     <section id="current-status">
       <SectionTitle>Current Status</SectionTitle>
       <SectionSub>Which modules are complete and which are in progress</SectionSub>
       <div className="space-y-2 mb-6">
         {[
           { s: "done" as const, l: "Flight Search & Booking System" },
+          { s: "done" as const, l: "Duffel Card Payment (Payment Intent + 3DS)" },
+          { s: "done" as const, l: "Duffel Balance Payment" },
           { s: "done" as const, l: "Email System (Resend + React Email)" },
-          { s: "done" as const, l: "Webhook System (Duffel + Stripe)" },
+          { s: "done" as const, l: "Webhook System (Duffel)" },
           { s: "done" as const, l: "MongoDB Database & Schema" },
           { s: "done" as const, l: "Admin Dashboard & Staff Management" },
           { s: "done" as const, l: "CLI Tool (start.bat)" },
-          { s: "pending" as const, l: "Payment Gateway (Stripe live integration)" },
           { s: "pending" as const, l: "Production Deployment (flybismillah.com)" },
         ].map((item) => (
           <div key={item.l} className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border text-sm ${item.s === "done" ? "bg-emerald-50/50 border-emerald-200 text-emerald-800" : "bg-amber-50/50 border-amber-200 text-amber-800"}`}>
@@ -1085,27 +1129,28 @@ Example:
       <div className="border border-zinc-200 rounded-lg p-5">
         <div className="flex items-center justify-between mb-3">
           <span className="font-semibold text-zinc-900 text-sm">Overall Progress</span>
-          <span className="font-bold text-zinc-900">75%</span>
+          <span className="font-bold text-zinc-900">89%</span>
         </div>
         <div className="w-full h-2.5 bg-zinc-100 rounded-full overflow-hidden">
-          <div className="h-full bg-zinc-900 rounded-full transition-all duration-1000" style={{ width: "75%" }} />
+          <div className="h-full bg-zinc-900 rounded-full transition-all duration-1000" style={{ width: "89%" }} />
         </div>
         <div className="flex justify-between mt-2">
-          <span className="text-zinc-400 text-xs">6 of 8 modules complete</span>
-          <span className="text-zinc-400 text-xs">2 in progress</span>
+          <span className="text-zinc-400 text-xs">8 of 9 modules complete</span>
+          <span className="text-zinc-400 text-xs">1 in progress</span>
         </div>
       </div>
     </section>
 
     <Divider />
 
+    {/* ===== ROADMAP ===== */}
     <section id="roadmap">
       <SectionTitle>Roadmap</SectionTitle>
       <SectionSub>Planned features and improvements</SectionSub>
       <div className="space-y-3">
         {[
-          { phase: "Phase 1", status: "done" as const, items: ["Flight search & filters", "Hold booking system", "Admin dashboard", "Email automation", "CLI tool"] },
-          { phase: "Phase 2", status: "pending" as const, items: ["Stripe live payment", "Production deployment", "Performance optimization", "SEO optimization"] },
+          { phase: "Phase 1", status: "done" as const, items: ["Flight search & filters", "Hold booking system", "Duffel Card & Balance payments", "Admin dashboard", "Email automation", "CLI tool"] },
+          { phase: "Phase 2", status: "pending" as const, items: ["Production deployment", "Performance optimization", "SEO optimization", "Customer self-service portal"] },
           { phase: "Phase 3", status: "pending" as const, items: ["Mobile app (React Native)", "Multi-language support", "Advanced analytics", "Customer loyalty program"] },
         ].map((phase) => (
           <div key={phase.phase} className="border border-zinc-200 rounded-lg p-4">
@@ -1177,14 +1222,8 @@ export default function DocumentationPage() {
       `}</style>
 
       <div className="min-h-screen bg-white">
-        <Sidebar
-          activeSection={activeSection}
-          onNavigate={handleNavigate}
-          mobileOpen={mobileMenuOpen}
-          onClose={() => setMobileMenuOpen(false)}
-        />
+        <Sidebar activeSection={activeSection} onNavigate={handleNavigate} mobileOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
 
-        {/* Top bar (mobile) */}
         <header className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-white/90 backdrop-blur-md border-b border-zinc-200 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-zinc-900 flex items-center justify-center">
@@ -1192,24 +1231,18 @@ export default function DocumentationPage() {
             </div>
             <span className="font-semibold text-sm text-zinc-900">Docs</span>
           </div>
-          <button
-            onClick={() => setMobileMenuOpen(true)}
-            className="p-1.5 hover:bg-zinc-100 rounded-md transition-colors"
-          >
+          <button onClick={() => setMobileMenuOpen(true)} className="p-1.5 hover:bg-zinc-100 rounded-md transition-colors">
             {icons.menu({ className: "w-5 h-5 text-zinc-600" })}
           </button>
         </header>
 
-        {/* Main content — padding on RIGHT for sidebar */}
         <main className="lg:pr-64">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 lg:pt-12 pb-16">
-            {/* Breadcrumb */}
             <div className="flex items-center gap-1.5 text-xs text-zinc-400 mb-8">
               <span>Docs</span>
               {icons.chevronRight({ className: "w-3 h-3" })}
               <span className="text-zinc-600 font-medium capitalize">{activeSection.replace(/-/g, " ")}</span>
             </div>
-
             <DocsContent />
           </div>
         </main>

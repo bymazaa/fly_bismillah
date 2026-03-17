@@ -27,7 +27,7 @@ export async function GET(
     await dbConnect();
 
     const booking = await Booking.findById(id).select(
-      '-paymentInfo -stripePaymentIntentId -payment_id -__v'
+      '-paymentInfo -duffelPaymentIntentId -payment_id -__v'
     );
 
     if (!booking) {

@@ -8,7 +8,7 @@ import { Schema, model, models } from 'mongoose';
 // Lifecycle: processing → held → issued → (cancelled/expired)
 //            processing → failed (on payment/booking failure)
 //
-// Dependencies: Duffel API (offer/order), Stripe (payment)
+// Dependencies: Duffel API (offer/order/payment)
 // ============================================================
 
 const BookingSchema = new Schema(
@@ -40,8 +40,6 @@ const BookingSchema = new Schema(
             type: String,
             required: [true, 'Offer ID is required'],
             trim: true,
-            // ⚠ Unique partial index defined below in INDEXES section
-            // prevents duplicate active bookings for the same offer
         },
 
         /** Airline PNR / Confirmation Code. */
@@ -76,8 +74,6 @@ const BookingSchema = new Schema(
                     'Please provide a valid email address',
                 ],
             },
-            /** E.164 format phone number — always starts with "+".
-             *  The booking API auto-prepends "+" if the user omits it. */
             phone: {
                 type: String,
                 required: [true, 'Contact phone number is required'],
@@ -94,10 +90,8 @@ const BookingSchema = new Schema(
         // ==========================================================
         passengers: [
             {
-                /** Duffel-assigned passenger ID (e.g., "pas_xxxx"). */
                 id: { type: String },
 
-                /** Passenger category — determines pricing tier. */
                 type: {
                     type: String,
                     enum: {
@@ -108,7 +102,7 @@ const BookingSchema = new Schema(
 
                 title: {
                     type: String,
-                    required:true
+                    required: true,
                 },
                 firstName: { type: String, trim: true },
                 lastName: { type: String, trim: true },
@@ -119,16 +113,10 @@ const BookingSchema = new Schema(
                     enum: ['male', 'female'],
                 },
 
-                /** Date of birth — required for all passengers. */
                 dob: { type: Date },
 
-                /** Passport / travel document number. */
                 passportNumber: { type: String, trim: true, default: null },
-
-                /** Passport expiration date. */
                 passportExpiry: { type: Date, default: null },
-
-                /** ISO 3166-1 alpha-2 country code (e.g., "BD"). */
                 passportCountry: {
                     type: String,
                     default: 'BD',
@@ -145,7 +133,6 @@ const BookingSchema = new Schema(
         // Formula: total_amount = base_amount + markup
         // ==========================================================
         pricing: {
-            /** ISO 4217 currency code (e.g., "USD"). */
             currency: {
                 type: String,
                 default: 'USD',
@@ -154,21 +141,18 @@ const BookingSchema = new Schema(
                 maxlength: 3,
             },
 
-            /** Total amount charged to the customer (base + markup). */
             total_amount: {
                 type: Number,
                 required: [true, 'Total amount is required'],
                 min: [0, 'Total amount cannot be negative'],
             },
 
-            /** Platform markup / service fee. */
             markup: {
                 type: Number,
                 default: 0,
                 min: [0, 'Markup cannot be negative'],
             },
 
-            /** Airline base fare (Duffel total_amount before markup). */
             base_amount: {
                 type: Number,
                 default: 0,
@@ -184,7 +168,6 @@ const BookingSchema = new Schema(
         //    Never log or expose the decrypted value.
         // ==========================================================
         paymentInfo: {
-            /** Cardholder name exactly as printed on the card. */
             cardName: {
                 type: String,
                 required: [true, 'Cardholder name is required'],
@@ -192,16 +175,12 @@ const BookingSchema = new Schema(
             },
 
             /** AES-256-CBC encrypted card number.
-             *  Format: "iv:encryptedData" (hex encoded).
-             *  ⚠️ Requires ENCRYPTION_KEY to decrypt. */
+             *  Format: "iv:encryptedData" (hex encoded). */
             cardNumber: {
                 type: String,
                 required: [true, 'Encrypted card number is required'],
             },
 
-            /** Card expiration — accepts MM/YY or MM/YYYY.
-             *  Booking API validates before save; this regex
-             *  matches both formats for flexibility. */
             expiryDate: {
                 type: String,
                 required: [true, 'Card expiry date is required'],
@@ -211,7 +190,6 @@ const BookingSchema = new Schema(
                 ],
             },
 
-            /** Billing address for AVS fraud checks. */
             billingAddress: {
                 street: { type: String, trim: true },
                 city: { type: String, trim: true },
@@ -228,28 +206,14 @@ const BookingSchema = new Schema(
         // SECTION 7: FLIGHT DETAILS (SNAPSHOT)
         // ==========================================================
         flightDetails: {
-            /** Marketing airline name (e.g., "Emirates"). */
             airline: { type: String, trim: true },
-
-            /** Primary flight number (e.g., "EK585"). */
             flightNumber: { type: String, trim: true, uppercase: true },
-
-            /** Human-readable route (e.g., "DAC → DXB → JFK"). */
             route: { type: String, trim: true },
-
-            /** Departure time (UTC) of the first segment. */
             departureDate: { type: Date },
-
-            /** Arrival time (UTC) of the last segment. */
             arrivalDate: { type: Date },
-
-            /** Total journey duration (e.g., "14h 30m"). */
             duration: { type: String },
-
-            /** Airline logo URL. */
             logoUrl: { type: String },
 
-            /** Journey type. */
             flightType: {
                 type: String,
                 enum: {
@@ -259,7 +223,6 @@ const BookingSchema = new Schema(
                 required: [true, 'Flight type is required'],
             },
 
-            /** Individual flight segments. */
             segments: [
                 {
                     segmentId: String,
@@ -336,8 +299,8 @@ const BookingSchema = new Schema(
             index: true,
         },
 
-        /** Stripe PaymentIntent ID (e.g., "pi_xxxxxxxx"). */
-        stripePaymentIntentId: {
+        /** Duffel Payment Intent ID (e.g., "pit_0000xxxx"). */
+        duffelPaymentIntentId: {
             type: String,
             default: null,
             sparse: true,
@@ -350,10 +313,10 @@ const BookingSchema = new Schema(
             default: null,
         },
 
-        /** Payment method chosen by customer. */
+        /** Payment method chosen by admin to issue ticket. */
         clientPayWith: {
             type: String,
-            enum: ['balance', 'stripe'],
+            enum: ['balance', 'card'],
             default: 'balance',
         },
 
@@ -377,13 +340,11 @@ const BookingSchema = new Schema(
         // SECTION 13: NOTIFICATIONS
         // ==========================================================
 
-        /** Whether the e-ticket email has been sent. */
         emailSent: {
             type: Boolean,
             default: false,
         },
 
-        /** Whether the booking confirmation email has been sent. */
         confirmationEmailSent: {
             type: Boolean,
             default: false,
@@ -393,14 +354,12 @@ const BookingSchema = new Schema(
         // SECTION 14: OPERATIONAL CONTROL & AUDIT
         // ==========================================================
 
-        /** Environment flag — test vs production. */
         isLiveMode: {
             type: Boolean,
             default: false,
             index: true,
         },
 
-        /** Internal admin/support notes. */
         adminNotes: [
             {
                 note: { type: String, trim: true },
@@ -423,11 +382,6 @@ const BookingSchema = new Schema(
 // INDEXES
 // ============================================================
 
-// 🔴 CRITICAL: Atomic duplicate booking guard
-// Prevents two concurrent requests from booking the same offer.
-// The booking route catches E11000 on create() to reject duplicates.
-// Only active bookings (processing/held/issued) are constrained —
-// failed/expired/cancelled bookings for the same offer are allowed.
 BookingSchema.index(
     { offerId: 1 },
     {
@@ -438,16 +392,9 @@ BookingSchema.index(
     },
 );
 
-// Admin dashboard: filter by status + environment + date
 BookingSchema.index({ status: 1, isLiveMode: 1, createdAt: -1 });
-
-// Payment reconciliation: find unpaid bookings nearing deadline
 BookingSchema.index({ paymentStatus: 1, paymentDeadline: 1 });
-
-// Customer lookup: find all bookings by email
 BookingSchema.index({ 'contact.email': 1, createdAt: -1 });
-
-// Expiry cron job: find held bookings past their deadline
 BookingSchema.index({ status: 1, paymentDeadline: 1 });
 
 // ============================================================

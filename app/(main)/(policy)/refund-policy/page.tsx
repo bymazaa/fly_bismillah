@@ -15,7 +15,7 @@ import {
 export const metadata = {
   title: "Refund Policy | Bismillah Travels and Tour",
   description:
-    "USA-compliant refund and cancellation policies for Bismillah Travels and Tour — powered by Duffel & Stripe.",
+    "USA-compliant refund and cancellation policies for Bismillah Travels and Tour — powered by Duffel.",
 };
 
 export default function RefundPolicy() {
@@ -27,7 +27,7 @@ export default function RefundPolicy() {
       border: "border-emerald-100",
       iconColor: "text-emerald-600",
       title: "24-Hour Risk-Free",
-      desc: "As per US DOT regulations, cancel any booking within 24 hours of purchase for a full refund, provided the flight is at least 7 days away. Stripe refund initiated instantly.",
+      desc: "As per US DOT regulations, cancel any booking within 24 hours of purchase for a full refund, provided the flight is at least 7 days away. Duffel refund initiated instantly.",
     },
     {
       icon: Clock,
@@ -36,7 +36,7 @@ export default function RefundPolicy() {
       border: "border-blue-100",
       iconColor: "text-blue-600",
       title: "Refund Timeline",
-      desc: "Duffel processes airline refunds within 24-72 hours. Stripe credits your original payment method within 5-10 business days after airline approval.",
+      desc: "Duffel processes airline refunds within 24-72 hours. Duffel credits your original payment method within 5-10 business days after airline approval.",
     },
     {
       icon: AlertTriangle,
@@ -57,7 +57,7 @@ export default function RefundPolicy() {
         <>
           <p>
             Bismillah Travels and Tour uses a two-step refund workflow powered
-            by <strong>Duffel</strong> and <strong>Stripe</strong>:
+            by <strong>Duffel api</strong> and <strong>Duffel Payment</strong>:
           </p>
           <div className="mt-5 space-y-4">
             <div className="flex items-start gap-4 bg-blue-50/50 border border-blue-100 p-4 rounded-xl">
@@ -81,11 +81,11 @@ export default function RefundPolicy() {
               </div>
               <div>
                 <h4 className="font-bold text-gray-900 text-sm mb-1">
-                  Step 2 — Stripe Refund
+                  Step 2 — Duffel Refund
                 </h4>
                 <p className="text-sm text-gray-600">
                   Once the airline approves, we initiate the refund through
-                  Stripe to your original payment method. Stripe handles the
+                  Duffel to your original payment method. Duffel handles the
                   secure transfer back to your bank or card.
                 </p>
               </div>
@@ -149,19 +149,19 @@ export default function RefundPolicy() {
           entitled to a <strong>full refund</strong> under US Department of
           Transportation (DOT) regulations — regardless of ticket type. In
           such cases, Duffel automatically flags the booking as eligible for a
-          full refund, and we process it via Stripe within 48 hours.
+          full refund, and we process it via Duffel within 48 hours.
         </p>
       ),
     },
     {
       icon: CreditCard,
-      title: "5. Stripe Payment Disputes & Chargebacks",
+      title: "5. Duffel Payment Disputes & Chargebacks",
       content: (
         <p>
           If you believe a charge is incorrect, please contact us{" "}
           <strong>before</strong> filing a dispute with your bank. Filing a
           chargeback directly with your card issuer without contacting us may
-          result in delays and additional fees. Stripe provides full
+          result in delays and additional fees. Duffel provides full
           transaction records and we can resolve most issues within 24 hours.
         </p>
       ),
@@ -207,7 +207,7 @@ export default function RefundPolicy() {
           <p className="text-gray-500 text-base leading-relaxed max-w-xl mx-auto">
             At Bismillah Travels and Tour, we operate under US consumer
             protection laws with transparent refund processing via Duffel &
-            Stripe.
+            Duffel.
           </p>
 
           {/* Tech badges */}
@@ -218,7 +218,7 @@ export default function RefundPolicy() {
             </span>
             <span className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-600 text-xs font-bold px-4 py-2 rounded-full shadow-2xl shadow-gray-100">
               <CreditCard className="w-3.5 h-3.5 text-violet-500" />
-              Stripe Refunds
+              Duffel Refunds
             </span>
           </div>
         </div>

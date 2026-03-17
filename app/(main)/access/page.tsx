@@ -689,40 +689,8 @@ export default function AdminLoginPage() {
                   </div>
 
                   {/* Remember + Forgot */}
-                  <div className="flex items-center justify-between pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setRememberMe(!rememberMe)}
-                      className="flex items-center gap-2.5 cursor-pointer group/check"
-                    >
-                      <div
-                        className={clsx(
-                          'w-5 h-5 rounded-lg border-2 transition-all duration-200 flex items-center justify-center flex-shrink-0',
-                          rememberMe
-                            ? 'bg-gray-500 border-gray-500 shadow-[0_2px_10px_-2px_rgba(59,130,246,0.4)] scale-105'
-                            : 'bg-white border-slate-200 group-hover/check:border-gray-300',
-                        )}
-                      >
-                        {rememberMe && (
-                          <svg
-                            className="w-3 h-3 text-white"
-                            viewBox="0 0 12 12"
-                            fill="none"
-                          >
-                            <path
-                              d="M2 6L5 9L10 3"
-                              stroke="currentColor"
-                              strokeWidth="2.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        )}
-                      </div>
-                      <span className="text-[13px] text-slate-400 group-hover/check:text-slate-600 transition-colors font-medium select-none">
-                        Remember me
-                      </span>
-                    </button>
+                  <div className="mx-auto w-fit justify-between pt-1">
+       
                     <Link
                       href="/forgot-password"
                       className="text-[13px] font-semibold text-gray-500 hover:text-gray-700 transition-colors duration-200 hover:underline underline-offset-2"

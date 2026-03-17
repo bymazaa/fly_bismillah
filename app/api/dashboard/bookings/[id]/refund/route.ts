@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Duffel } from '@duffel/api';
 import dbConnect from '@/connection/db';
 import Booking from '@/models/Booking.model';
+import { hasPermission } from '@/app/api/lib/auth';
 
 // ─── Duffel Client ────────────────────────────────────────────────────────────
 if (!process.env.DUFFEL_ACCESS_TOKEN) {
@@ -61,6 +62,9 @@ export async function GET(
     _request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+
+    const auth = await hasPermission('booking', 'view');
+    if (!auth.success) return auth.response;
     try {
         const { id } = await params;
 

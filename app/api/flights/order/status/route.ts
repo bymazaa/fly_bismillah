@@ -179,6 +179,7 @@ export async function POST(request: NextRequest) {
             pnr:              b.pnr ?? null,
             status:           b.status,
             paymentStatus:    b.paymentStatus,
+            clientPayWith:    b.clientPayWith ?? 'balance',
             isLiveMode:       b.isLiveMode ?? false,
 
             paymentDeadline: b.paymentDeadline ?? null,

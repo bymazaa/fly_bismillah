@@ -2,56 +2,39 @@ import dbConnect from '@/connection/db';
 import Booking from '@/models/Booking.model';
 import { NextRequest, NextResponse } from 'next/server';
 
-// ─── GET: Fetch single booking by bookingReference ───────────────────────────
+// ─── GET: Fetch single failed booking by bookingReference ───────────────────
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ ref: string }> }) {
     try {
         await dbConnect();
 
         const { ref } = await params;
 
-        const booking = await Booking.findOne(
-            {
-                bookingReference: ref,
-                status: 'failed', // ✅ শুধু failed booking return হবে
-            },
-            {
-                // ─── INCLUDED FIELDS ONLY ───────────────────────────────
-                _id: 1,
-                bookingReference: 1,
-                status: 1,
-                paymentStatus: 1,
-
-                // কেন failed হলো
-                retryCount: 1,
-                lastRetryAt: 1,
-                adminNotes: 1,
-
-                // Passenger info
-                passengers: 1,
-
-                // Contact
-                contact: 1,
-
-                // Flight snapshot
-                flightDetails: 1,
-
-                // Timestamps
-                createdAt: 1,
-                updatedAt: 1,
-
-                // ─── EXCLUDED ───────────────────────────────────────────
-                // paymentInfo → NOT included (has encrypted card data)
-                // offerId, duffelOrderId, stripePaymentIntentId → NOT needed
-                // pricing, documents, airlineInitiatedChanges → NOT needed
-            },
-        ).lean();
+        // ✅ FIX 1: Use .select() for field projection (Much safer in Mongoose)
+        const booking = await Booking.findOne({
+            bookingReference: ref,
+            status: 'failed', // ✅ শুধু failed booking return হবে
+        })
+        .select(`
+            _id 
+            bookingReference 
+            status 
+            paymentStatus 
+            retryCount 
+            lastRetryAt 
+            adminNotes 
+            passengers 
+            contact 
+            flightDetails 
+            createdAt 
+            updatedAt
+        `)
+        .lean();
 
         if (!booking) {
             return NextResponse.json(
                 {
                     success: false,
-                    message:
-                        'Failed booking not found. It may not exist or may not be in a failed state.',
+                    message: 'Failed booking not found. It may not exist or may not be in a failed state.',
                 },
                 { status: 404 },
             );
@@ -109,7 +92,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ref
             adminNotes: booking.adminNotes,
         });
     } catch (error: any) {
-        console.error('[POST /admin/bookings/:ref]', error);
+        console.error('[POST /admin/bookings/failed/:ref]', error);
         return NextResponse.json(
             { success: false, message: 'Internal server error' },
             { status: 500 },
@@ -117,13 +100,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ref
     }
 }
 
-// ─── DELETE: Remove a specific admin note by index ───────────────────────────
+// ─── DELETE: Delete entire failed booking ───────────────────────────────────
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ ref: string }> }) {
     try {
         await dbConnect();
         const { ref } = await params;
 
-        // findOneAndDelete ekebare khuje ber korbe ebong delete korbe
+        // findOneAndDelete পুরো বুকিং রিমুভ করবে
         const deletedBooking = await Booking.findOneAndDelete({
             bookingReference: ref,
             status: 'failed',
@@ -138,7 +121,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ r
 
         return NextResponse.json({ success: true, message: 'Successfully deleted failed booking' });
     } catch (error: any) {
-        console.error('[DELETE /admin/bookings/:ref]', error);
+        console.error('[DELETE /admin/bookings/failed/:ref]', error);
         return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
     }
 }

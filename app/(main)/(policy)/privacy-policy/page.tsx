@@ -16,7 +16,7 @@ import { websiteDetails } from "@/constant/data";
 export const metadata = {
   title: "Privacy Policy | Bismillah Travels and Tour",
   description:
-    "How we collect, use, and protect your personal data — powered by Duffel & Stripe.",
+    "How we collect, use, and protect your personal data — powered by Duffel.",
 };
 
 export default function PrivacyPolicy() {
@@ -59,30 +59,8 @@ export default function PrivacyPolicy() {
               </ul>
             </div>
 
-            {/* Stripe Data */}
-            <div className="bg-violet-50/50 border border-violet-100 p-5 rounded-xl">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 bg-violet-100 rounded-lg flex items-center justify-center">
-                  <CreditCard className="w-4 h-4 text-violet-600" />
-                </div>
-                <h4 className="font-bold text-gray-900 text-sm">
-                  Data Processed by Stripe (Payments)
-                </h4>
-              </div>
-              <ul className="space-y-2 text-sm">
-                {[
-                  "Credit/debit card number, expiration, CVV (encrypted by Stripe — never stored on our servers)",
-                  "Billing name & address for fraud verification",
-                  "Transaction amount and currency (USD)",
-                  "IP address & device fingerprint (Stripe Radar fraud detection)",
-                ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-violet-400 rounded-full mt-2 shrink-0" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+   
+        
           </div>
         </>
       ),
@@ -97,7 +75,7 @@ export default function PrivacyPolicy() {
           <ul className="list-none space-y-3 mt-4">
             {[
               "Searching and booking flights via Duffel's API on your behalf.",
-              "Processing secure payments and issuing receipts via Stripe.",
+              "Processing secure payments and issuing receipts via duffel payment.",
               "Submitting required passenger data to the US Transportation Security Administration (TSA) for Secure Flight vetting.",
               "Sending booking confirmations, itinerary updates, and e-tickets to your registered email.",
               "Providing customer support for booking modifications, cancellations, and refunds.",
@@ -133,13 +111,7 @@ export default function PrivacyPolicy() {
                 bg: "bg-blue-50",
                 border: "border-blue-100",
               },
-              {
-                name: "Stripe",
-                desc: "Payment data for transaction processing. PCI-DSS Level 1 certified.",
-                icon: CreditCard,
-                bg: "bg-violet-50",
-                border: "border-violet-100",
-              },
+             
               {
                 name: "Airlines & GDS",
                 desc: "Passenger info for seat confirmation and e-ticket generation.",
@@ -190,7 +162,7 @@ export default function PrivacyPolicy() {
           <ul className="list-none space-y-3 mt-4">
             {[
               "All website traffic is encrypted with SSL/TLS (256-bit encryption).",
-              "Payment data is tokenized by Stripe — we never see or store your full card number.",
+              "Payment data is tokenized by Duffel Payment — we never see or store your full card number.",
               "Duffel API communications use OAuth 2.0 authentication and encrypted channels.",
               "Our servers are hosted on SOC 2 compliant infrastructure within the United States.",
               "Regular security audits and vulnerability assessments are performed.",
@@ -344,7 +316,7 @@ export default function PrivacyPolicy() {
             </span>
             <span className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-600 text-xs font-bold px-4 py-2 rounded-full shadow-2xl shadow-gray-100">
               <CreditCard className="w-3.5 h-3.5 text-violet-500" />
-              Stripe PCI-DSS
+              Duffel payment PCI-DSS
             </span>
           </div>
         </div>

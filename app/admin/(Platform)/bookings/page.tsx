@@ -8,7 +8,6 @@ import {
     Plane,
     Calendar,
     Clock,
-    Wallet,
     Download,
     ChevronRight,
     ChevronLeft,
@@ -18,7 +17,6 @@ import {
     XCircle,
     ShoppingCart,
     DollarSign,
-    Loader2,
     Copy,
     Eye,
     RefreshCcw as RefreshCcwIcon,
@@ -29,7 +27,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, isValid } from 'date-fns';
-import StripeWrapper from '@/app/admin/components/StripeWrapper';
+import IssueTicketModalNew from './components/IssueTicketModalNew';
 
 interface Booking {
     id: string;
@@ -271,11 +269,11 @@ export default function BookingsDashboard() {
     const [totalCount, setTotalCount] = useState(0);
     const [search, setSearch] = useState('');
     const [filter, setFilter] = useState<'all' | 'held' | 'issued' | 'cancelled'>('all');
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    // ✅ Issue Modal — শুধু open/close + selected booking
     const [issueModalOpen, setIssueModalOpen] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
-    const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'balance'>('stripe');
-    const [isProcessing, setIsProcessing] = useState(false);
-    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const [globalStats, setGlobalStats] = useState<GlobalStats>({
         total: 0, issued: 0, cancelled: 0, pending: 0, profit: 0, currency: 'USD',
@@ -340,32 +338,10 @@ export default function BookingsDashboard() {
         }
     };
 
+    // ✅ শুধু modal open করে, বাকি সব modal component handle করে
     const openIssueModal = (b: Booking) => {
         setSelectedBooking(b);
-        setPaymentMethod('stripe');
         setIssueModalOpen(true);
-    };
-
-    const handleIssueTicket = async () => {
-        if (!selectedBooking || paymentMethod !== 'balance') return;
-        setIsProcessing(true);
-        try {
-            const res = await axios.post('/api/flights/issue-ticket', {
-                bookingId: selectedBooking.id,
-                paymentMethod: 'balance',
-            });
-            if (res.data.success) {
-                toast.success(res.data.message || 'Ticket issued successfully');
-                setIssueModalOpen(false);
-                setRefreshKey((prev) => prev + 1);
-            } else {
-                throw new Error(res.data.message || 'Failed');
-            }
-        } catch (error: any) {
-            toast.error(error?.response?.data?.message || error.message || 'Failed to issue ticket');
-        } finally {
-            setIsProcessing(false);
-        }
     };
 
     const handleCopy = (text: string) => {
@@ -684,11 +660,6 @@ export default function BookingsDashboard() {
                                                         {/* ── Actions ── */}
                                                         <td className="px-5 py-4 text-right align-top">
                                                             <div className="flex items-center justify-end gap-2">
-                                                                {/*
-                                                                  ✅ DOWNLOAD FIX:
-                                                                  ticketUrl আছে → real URL, নতুন tab এ খোলে
-                                                                  ticketUrl নেই → disabled icon (test mode এ url থাকে না)
-                                                                */}
                                                                 {booking.status === 'issued' && (
                                                                     booking.actionData.ticketUrl ? (
                                                                         <a
@@ -791,178 +762,43 @@ export default function BookingsDashboard() {
                 </div>
             </div>
 
-            {/* ── ISSUE TICKET MODAL ── */}
-            {issueModalOpen && selectedBooking && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center px-4"
-                    style={{ backgroundColor: 'rgba(15, 23, 42, 0.5)' }}
-                >
-                    <div
-                        className="w-full max-w-md max-h-[90vh] rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/60 flex flex-col"
-                        style={{ isolation: 'isolate' }}
-                    >
-                        <div className="h-1 w-full bg-gradient-to-r from-indigo-500 via-sky-500 to-emerald-500 rounded-t-2xl shrink-0" />
-                        <div className="flex items-start justify-between border-b border-slate-100 px-6 pt-5 pb-4 shrink-0">
-                            <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
-                                        <Plane size={14} />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">Ticket Issuing</p>
-                                        <h3 className="text-base font-bold text-slate-900">Issue Ticket</h3>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2 mt-2">
-                                    <span className="inline-flex items-center rounded-lg bg-slate-900 px-2 py-0.5 font-mono text-[10px] font-bold text-white">
-                                        {selectedBooking.pnr !== '---' ? selectedBooking.pnr : 'No PNR'}
-                                    </span>
-                                    <span className="text-[11px] text-slate-500">{selectedBooking.bookingRef}</span>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setIssueModalOpen(false)}
-                                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-slate-700 hover:border-slate-300 transition-all cursor-pointer"
-                            >
-                                <X size={16} />
-                            </button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4" style={{ WebkitOverflowScrolling: 'touch' }}>
-                            <div className="rounded-xl border border-slate-200/60 bg-gradient-to-r from-slate-50 to-white p-4">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">Total Amount</p>
-                                        <p className="mt-0.5 text-[11px] text-slate-500">
-                                            {paymentMethod === 'balance' ? 'Using agency balance' : 'Client pays via Stripe'}
-                                        </p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-xl font-extrabold tracking-tight text-slate-900">
-                                            {selectedBooking.amount.currency}{' '}
-                                            {paymentMethod === 'balance'
-                                                ? selectedBooking.amount.base_amount.toFixed(2)
-                                                : selectedBooking.amount.total.toFixed(2)}
-                                        </p>
-                                        <p className="text-[10px] text-slate-400">Taxes & fees included</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="space-y-3">
-                                <div
-                                    className={`relative rounded-xl border-2 transition-all duration-200 ${
-                                        paymentMethod === 'stripe'
-                                            ? 'border-indigo-400/80 bg-indigo-50/30 shadow-sm'
-                                            : 'border-slate-200 bg-white hover:border-slate-300 cursor-pointer'
-                                    }`}
-                                    onClick={() => { if (paymentMethod !== 'stripe') setPaymentMethod('stripe'); }}
-                                >
-                                    <div className="h-[2px] w-full bg-gradient-to-r from-indigo-500 via-sky-500 to-emerald-400" />
-                                    <div className="p-4">
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div className="flex-1">
-                                                <p className="text-sm font-bold text-slate-900">Pay with Stripe</p>
-                                                <p className="mt-0.5 text-[11px] text-slate-500">Secure card payment with 3D Secure (OTP)</p>
-                                            </div>
-                                            <div className="flex flex-col items-end gap-1">
-                                                <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-2 py-0.5">
-                                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-                                                    <span className="text-[9px] font-bold tracking-wide text-white">STRIPE</span>
-                                                </span>
-                                                <span className="text-[9px] text-slate-400">PCI Compliant</span>
-                                            </div>
-                                        </div>
-                                        {paymentMethod === 'stripe' && (
-                                            <div
-                                                className="mt-3 pt-3 border-t border-slate-100"
-                                                style={{ position: 'relative', zIndex: 99999, isolation: 'isolate', pointerEvents: 'auto' }}
-                                                onClick={(e) => e.stopPropagation()}
-                                                onMouseDown={(e) => e.stopPropagation()}
-                                                onTouchStart={(e) => e.stopPropagation()}
-                                                onFocus={(e) => e.stopPropagation()}
-                                                onPointerDown={(e) => e.stopPropagation()}
-                                            >
-                                                <StripeWrapper
-                                                    amount={Number(selectedBooking.amount.total)}
-                                                    bookingId={selectedBooking.id}
-                                                    bookRef={selectedBooking.bookingRef}
-                                                    cardInfo={
-                                                        selectedBooking.paymentSource
-                                                            ? {
-                                                                  holderName: selectedBooking.paymentSource.holderName || undefined,
-                                                                  cardNumber: selectedBooking.paymentSource.cardNumber || undefined,
-                                                                  expiryDate: selectedBooking.paymentSource.expiryDate || undefined,
-                                                                  zipCode:
-                                                                      selectedBooking.paymentSource.billingAddress?.zipCode ||
-                                                                      selectedBooking.paymentSource.zipCode ||
-                                                                      undefined,
-                                                              }
-                                                            : undefined
-                                                    }
-                                                    onSuccess={() => {
-                                                        setIssueModalOpen(false);
-                                                        setRefreshKey((prev) => prev + 1);
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                <div
-                                    onClick={() => setPaymentMethod('balance')}
-                                    className={`relative cursor-pointer rounded-xl border-2 transition-all duration-200 ${
-                                        paymentMethod === 'balance'
-                                            ? 'border-slate-600/80 bg-slate-50/50 shadow-sm'
-                                            : 'border-slate-200 bg-white hover:border-slate-300'
-                                    }`}
-                                >
-                                    <div className="p-4">
-                                        <div className="flex items-start gap-3">
-                                            <div className={`mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all ${paymentMethod === 'balance' ? 'border-slate-700' : 'border-slate-300'}`}>
-                                                {paymentMethod === 'balance' && <div className="h-2.5 w-2.5 rounded-full bg-slate-700" />}
-                                            </div>
-                                            <div className="flex-1">
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <div>
-                                                        <p className="text-sm font-bold text-slate-900">Duffel Balance</p>
-                                                        <p className="mt-0.5 text-[11px] text-slate-500">Deduct from agency wallet. Ideal for net fares.</p>
-                                                    </div>
-                                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
-                                                        <Wallet size={16} />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex gap-3 rounded-xl border border-amber-200/60 bg-amber-50/60 p-3.5">
-                                <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
-                                    <AlertCircle size={14} />
-                                </div>
-                                <p className="text-[11px] leading-relaxed text-amber-900">
-                                    Confirming will immediately issue the ticket and charge the selected source.
-                                    This action is <span className="font-bold">irreversible</span>. Airline change/refund rules will apply.
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-end gap-3 border-t border-slate-100 px-6 py-4 bg-slate-50/50 shrink-0">
-                            <button
-                                onClick={() => setIssueModalOpen(false)}
-                                className="rounded-xl border border-slate-200 px-4 py-2.5 text-[12px] font-semibold text-slate-700 transition-all hover:bg-slate-100 cursor-pointer"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleIssueTicket}
-                                disabled={isProcessing || paymentMethod === 'stripe'}
-                                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-[12px] font-bold text-white shadow-lg shadow-slate-300/30 transition-all hover:bg-slate-800 active:scale-[0.97] disabled:cursor-not-allowed disabled:bg-slate-400 disabled:shadow-none cursor-pointer"
-                            >
-                                {isProcessing && <Loader2 size={14} className="animate-spin" />}
-                                {isProcessing ? 'Processing…' : 'Confirm & Issue'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            {/* ═══════════════════ ISSUE TICKET MODAL (EXTRACTED COMPONENT) ═══════════════════ */}
+            {selectedBooking && (
+                <IssueTicketModalNew
+                    open={issueModalOpen}
+                    onClose={() => {
+                        setIssueModalOpen(false);
+                        setSelectedBooking(null);
+                    }}
+                    onSuccess={() => {
+                        setIssueModalOpen(false);
+                        setSelectedBooking(null);
+                        setRefreshKey((prev) => prev + 1);
+                    }}
+                    bookingId={selectedBooking.id}
+                    bookingRef={selectedBooking.bookingRef}
+                    pnr={selectedBooking.pnr !== '---' ? selectedBooking.pnr : 'N/A'}
+                    finance={{
+                        basePrice: String(selectedBooking.amount.base_amount),
+                        tax: '0',
+                        clientTotal: String(selectedBooking.amount.total.toFixed(2)),
+                        currency: selectedBooking.amount.currency,
+                        yourMarkup: selectedBooking.amount.markup,
+                        duffelTotal: String(selectedBooking.amount.base_amount.toFixed(2)),
+                    }}
+                    paymentSource={
+                        selectedBooking.paymentSource
+                            ? {
+                                  holderName: selectedBooking.paymentSource.holderName,
+                                  cardNumber: selectedBooking.paymentSource.cardNumber,
+                                  expiryDate: selectedBooking.paymentSource.expiryDate,
+                                  cvv: null,
+                                  billingAddress: selectedBooking.paymentSource.billingAddress,
+                                  zipCode: selectedBooking.paymentSource.zipCode,
+                              }
+                            : null
+                    }
+                />
             )}
         </div>
     );
