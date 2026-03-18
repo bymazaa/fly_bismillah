@@ -28,6 +28,7 @@ import {
 import { toast } from 'sonner';
 import { format, isValid } from 'date-fns';
 import IssueTicketModalNew from './components/IssueTicketModalNew';
+import { SERVICE_FEE_RATE } from '@/constant/control';
 
 // ══════════════════════════════════════════
 // TYPES
@@ -851,10 +852,8 @@ export default function BookingsDashboard() {
                                                                 <p className="mt-0.5 inline-flex items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600 ring-1 ring-emerald-200/60">
                                                                     <ArrowUpRight size={9} />+
                                                                     {(
-                                                                        booking.amount.markup -
-                                                                        (booking.amount.markup *
-                                                                            2.9) /
-                                                                            100
+                                                                        booking.amount.markup *
+                                                                        (1 - SERVICE_FEE_RATE / 100)
                                                                     ).toFixed(2)}
                                                                 </p>
                                                             )}
