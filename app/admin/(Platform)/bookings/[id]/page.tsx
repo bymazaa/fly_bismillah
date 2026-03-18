@@ -1556,7 +1556,7 @@ export default function BookingDetailsPage() {
                     </span>
                   </div>
                   <div className="flex justify-between text-[12px]">
-                    <span className="text-gray-500"> Markup</span>
+                    <span className="text-gray-500"> Markup + Fees</span>
                     <span className="font-medium text-gray-700 tabular-nums">
                       {data.finance.currency}{" "}
                       {String(data.finance.yourMarkup)}

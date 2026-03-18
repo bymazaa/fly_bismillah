@@ -26,7 +26,7 @@ export const calculatePriceWithMarkup = (
     return { currency: 'USD', basePrice: 0, markup: 0, finalPrice: 0 };
   }
 
-  const markup = basePrice * (COMMISION_RATE / 100);
+  const markup = basePrice * (COMMISION_RATE / 100); // e.g., 10% commission
   const finalPrice = Math.ceil(basePrice + markup);
 
   return {
