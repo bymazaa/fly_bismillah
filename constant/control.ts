@@ -13,7 +13,7 @@ export const FLIGHT_SEARCH_CACHE_DURATION_MS = 10 * 60 * 1000; // 10 Minutes in 
 export const FLIGHT_SEARCH_CACHE_KEY_PREFIX = 'flight_search_';
 
 export const BOOKING_EXPIRY_DURATION_MS = 15 * 60 * 1000; // 15 Minutes in MS
-export const COMMISION_RATE = 5 + 2.9; // 5% Commission + $2.90 per booking fee total 7.9% markup
+export const COMMISION_RATE = 7.9; // total percentage
 export const TAX_RATE = 0; // 10% Tax
 export const DISCOUNT_RATE = 0;
 export const MAX_PASSENGERS = 9; // Max 9 Passengers per Booking
