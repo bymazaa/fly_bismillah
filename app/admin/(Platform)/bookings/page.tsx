@@ -183,17 +183,58 @@ function CountdownTimer({ deadline }: { deadline: string }) {
 }
 
 function StatusBadge({ status }: { status: Booking['status'] }) {
-    const map: Record<string, { label: string; dot: string; bg: string; text: string; ring: string }> = {
-        issued: { label: 'Issued', dot: 'bg-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700', ring: 'ring-emerald-200/60' },
-        held: { label: 'Held', dot: 'bg-amber-500', bg: 'bg-amber-50', text: 'text-amber-700', ring: 'ring-amber-200/60' },
-        cancelled: { label: 'Cancelled', dot: 'bg-slate-400', bg: 'bg-slate-50', text: 'text-slate-600', ring: 'ring-slate-200/60' },
-        expired: { label: 'Expired', dot: 'bg-rose-500', bg: 'bg-rose-50', text: 'text-rose-600', ring: 'ring-rose-200/60' },
-        processing: { label: 'Processing', dot: 'bg-blue-500', bg: 'bg-blue-50', text: 'text-blue-700', ring: 'ring-blue-200/60' },
-        failed: { label: 'Failed', dot: 'bg-red-500', bg: 'bg-red-50', text: 'text-red-700', ring: 'ring-red-200/60' },
+    const map: Record<
+        string,
+        { label: string; dot: string; bg: string; text: string; ring: string }
+    > = {
+        issued: {
+            label: 'Issued',
+            dot: 'bg-emerald-500',
+            bg: 'bg-emerald-50',
+            text: 'text-emerald-700',
+            ring: 'ring-emerald-200/60',
+        },
+        held: {
+            label: 'Held',
+            dot: 'bg-amber-500',
+            bg: 'bg-amber-50',
+            text: 'text-amber-700',
+            ring: 'ring-amber-200/60',
+        },
+        cancelled: {
+            label: 'Cancelled',
+            dot: 'bg-slate-400',
+            bg: 'bg-slate-50',
+            text: 'text-slate-600',
+            ring: 'ring-slate-200/60',
+        },
+        expired: {
+            label: 'Expired',
+            dot: 'bg-rose-500',
+            bg: 'bg-rose-50',
+            text: 'text-rose-600',
+            ring: 'ring-rose-200/60',
+        },
+        processing: {
+            label: 'Processing',
+            dot: 'bg-blue-500',
+            bg: 'bg-blue-50',
+            text: 'text-blue-700',
+            ring: 'ring-blue-200/60',
+        },
+        failed: {
+            label: 'Failed',
+            dot: 'bg-red-500',
+            bg: 'bg-red-50',
+            text: 'text-red-700',
+            ring: 'ring-red-200/60',
+        },
     };
     const d = map[status] || map.cancelled;
     return (
-        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold ring-1 ${d.bg} ${d.text} ${d.ring}`}>
+        <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold ring-1 ${d.bg} ${d.text} ${d.ring}`}
+        >
             <span className={`h-1.5 w-1.5 rounded-full ${d.dot}`} />
             {d.label}
         </span>
@@ -213,10 +254,14 @@ function StatCard({
 }) {
     return (
         <div className="group relative rounded-2xl border border-slate-200/60 bg-white p-5 transition-all hover:shadow-lg hover:shadow-slate-200/50 hover:border-slate-300/60">
-            <div className={`absolute -top-8 -right-8 h-24 w-24 rounded-full blur-2xl opacity-[0.07] ${accentColor}`} />
+            <div
+                className={`absolute -top-8 -right-8 h-24 w-24 rounded-full blur-2xl opacity-[0.07] ${accentColor}`}
+            />
             <div className="relative flex items-start justify-between">
                 <div className="space-y-1.5">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">{label}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
+                        {label}
+                    </p>
                     <p className="text-2xl font-extrabold tracking-tight text-slate-900">{value}</p>
                 </div>
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 ring-1 ring-slate-100 transition-transform group-hover:scale-110">
@@ -416,7 +461,8 @@ export default function BookingsDashboard() {
             total: totalCount,
             issued: bookings.filter((b) => b.status === 'issued').length,
             cancelled: bookings.filter((b) => b.status === 'cancelled').length,
-            pending: bookings.filter((b) => b.status === 'held' || b.status === 'processing').length,
+            pending: bookings.filter((b) => b.status === 'held' || b.status === 'processing')
+                .length,
             profit: bookings
                 .filter((b) => b.status === 'issued')
                 .reduce((acc, c) => acc + (c.amount.markup || 0), 0),
@@ -433,7 +479,6 @@ export default function BookingsDashboard() {
     return (
         <div className="min-h-screen w-full bg-[#f8f9fb] p-4 md:p-6 lg:p-8">
             <div className="mx-auto flex max-w-[1400px] flex-col gap-6">
-
                 {/* ─── HEADER ─── */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div className="space-y-1.5">
@@ -467,10 +512,30 @@ export default function BookingsDashboard() {
 
                 {/* ─── STATS ─── */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <StatCard label="Total Bookings" value={stats.total.toLocaleString()} icon={ShoppingCart} accentColor="bg-blue-500" />
-                    <StatCard label="Issued" value={stats.issued.toLocaleString()} icon={CheckCircle} accentColor="bg-emerald-500" />
-                    <StatCard label="Cancelled" value={stats.cancelled.toLocaleString()} icon={XCircle} accentColor="bg-rose-500" />
-                    <StatCard label="Total Profit" value={`${stats.currency} ${stats.profit.toFixed(2)}`} icon={DollarSign} accentColor="bg-amber-500" />
+                    <StatCard
+                        label="Total Bookings"
+                        value={stats.total.toLocaleString()}
+                        icon={ShoppingCart}
+                        accentColor="bg-blue-500"
+                    />
+                    <StatCard
+                        label="Issued"
+                        value={stats.issued.toLocaleString()}
+                        icon={CheckCircle}
+                        accentColor="bg-emerald-500"
+                    />
+                    <StatCard
+                        label="Cancelled"
+                        value={stats.cancelled.toLocaleString()}
+                        icon={XCircle}
+                        accentColor="bg-rose-500"
+                    />
+                    <StatCard
+                        label="Total Profit"
+                        value={`${stats.currency} ${stats.profit.toFixed(2)}`}
+                        icon={DollarSign}
+                        accentColor="bg-amber-500"
+                    />
                 </div>
 
                 {/* ─── CONTROLS ─── */}
@@ -527,7 +592,10 @@ export default function BookingsDashboard() {
                             <h2 className="text-sm font-semibold text-slate-900">All Bookings</h2>
                             <p className="mt-0.5 text-[11px] text-slate-500">
                                 Showing{' '}
-                                <span className="font-semibold text-slate-700">{bookings.length}</span> of{' '}
+                                <span className="font-semibold text-slate-700">
+                                    {bookings.length}
+                                </span>{' '}
+                                of{' '}
                                 <span className="font-semibold text-slate-700">{totalCount}</span>
                             </p>
                         </div>
@@ -544,18 +612,23 @@ export default function BookingsDashboard() {
                                 <table className="w-full text-left text-sm">
                                     <thead>
                                         <tr className="border-b border-slate-100 bg-slate-50/60">
-                                            {['Ref / PNR', 'Flight', 'Passenger', 'Date & Status', 'Amount', 'Actions'].map(
-                                                (h, i) => (
-                                                    <th
-                                                        key={h}
-                                                        className={`px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 ${
-                                                            i === 4 ? 'text-center' : ''
-                                                        } ${i === 5 ? 'text-right' : ''}`}
-                                                    >
-                                                        {h}
-                                                    </th>
-                                                ),
-                                            )}
+                                            {[
+                                                'Ref / PNR',
+                                                'Flight',
+                                                'Passenger',
+                                                'Date & Status',
+                                                'Amount',
+                                                'Actions',
+                                            ].map((h, i) => (
+                                                <th
+                                                    key={h}
+                                                    className={`px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 ${
+                                                        i === 4 ? 'text-center' : ''
+                                                    } ${i === 5 ? 'text-right' : ''}`}
+                                                >
+                                                    {h}
+                                                </th>
+                                            ))}
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50">
@@ -566,8 +639,12 @@ export default function BookingsDashboard() {
                                                         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
                                                             <Plane className="h-6 w-6 text-slate-300" />
                                                         </div>
-                                                        <p className="text-sm font-semibold text-slate-700">No bookings found</p>
-                                                        <p className="text-xs text-slate-500">Try adjusting search or filters</p>
+                                                        <p className="text-sm font-semibold text-slate-700">
+                                                            No bookings found
+                                                        </p>
+                                                        <p className="text-xs text-slate-500">
+                                                            Try adjusting search or filters
+                                                        </p>
                                                         {(search || filter !== 'all') && (
                                                             <button
                                                                 onClick={() => {
@@ -606,12 +683,17 @@ export default function BookingsDashboard() {
                                                                 </p>
                                                                 {hasPnr ? (
                                                                     <button
-                                                                        onClick={() => handleCopy(booking.pnr)}
+                                                                        onClick={() =>
+                                                                            handleCopy(booking.pnr)
+                                                                        }
                                                                         className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-slate-900 px-2 py-1 font-mono text-[10px] font-bold text-white hover:bg-slate-700 active:scale-95"
                                                                         title="Copy PNR"
                                                                     >
                                                                         {booking.pnr}
-                                                                        <Copy size={9} className="text-slate-400" />
+                                                                        <Copy
+                                                                            size={9}
+                                                                            className="text-slate-400"
+                                                                        />
                                                                     </button>
                                                                 ) : (
                                                                     <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[10px] text-slate-400">
@@ -632,15 +714,24 @@ export default function BookingsDashboard() {
                                                                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-100 bg-slate-50">
                                                                     {booking.flight.logoUrl ? (
                                                                         <img
-                                                                            src={booking.flight.logoUrl}
+                                                                            src={
+                                                                                booking.flight
+                                                                                    .logoUrl
+                                                                            }
                                                                             alt=""
                                                                             className="h-full w-full object-contain p-1"
                                                                             onError={(e) => {
-                                                                                (e.target as HTMLImageElement).style.display = 'none';
+                                                                                (
+                                                                                    e.target as HTMLImageElement
+                                                                                ).style.display =
+                                                                                    'none';
                                                                             }}
                                                                         />
                                                                     ) : (
-                                                                        <Plane size={14} className="text-slate-400" />
+                                                                        <Plane
+                                                                            size={14}
+                                                                            className="text-slate-400"
+                                                                        />
                                                                     )}
                                                                 </div>
                                                                 <div className="min-w-0">
@@ -649,10 +740,15 @@ export default function BookingsDashboard() {
                                                                     </p>
                                                                     <p className="mt-0.5 text-[11px] text-slate-500">
                                                                         {booking.flight.airline}
-                                                                        {booking.flight.flightNumber && ` · ${booking.flight.flightNumber}`}
+                                                                        {booking.flight
+                                                                            .flightNumber &&
+                                                                            ` · ${booking.flight.flightNumber}`}
                                                                     </p>
                                                                     <span className="mt-1 inline-flex rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-500">
-                                                                        {booking.flight.tripType.replace(/_/g, ' ')}
+                                                                        {booking.flight.tripType.replace(
+                                                                            /_/g,
+                                                                            ' ',
+                                                                        )}
                                                                     </span>
                                                                 </div>
                                                             </div>
@@ -675,7 +771,10 @@ export default function BookingsDashboard() {
                                                                     </p>
                                                                     {booking.passengerCount > 1 && (
                                                                         <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-slate-400">
-                                                                            <Users size={9} />+{booking.passengerCount - 1} travelers
+                                                                            <Users size={9} />+
+                                                                            {booking.passengerCount -
+                                                                                1}{' '}
+                                                                            travelers
                                                                         </span>
                                                                     )}
                                                                 </div>
@@ -686,30 +785,58 @@ export default function BookingsDashboard() {
                                                         <td className="px-5 py-4 align-top">
                                                             <div className="space-y-1.5">
                                                                 <div className="flex items-center gap-1.5 text-[12px] text-slate-600">
-                                                                    <Calendar size={11} className="text-slate-400" />
+                                                                    <Calendar
+                                                                        size={11}
+                                                                        className="text-slate-400"
+                                                                    />
                                                                     <span className="font-medium">
-                                                                        {safeFormat(booking.flight.date, 'dd MMM yyyy', 'No date')}
+                                                                        {safeFormat(
+                                                                            booking.flight.date,
+                                                                            'dd MMM yyyy',
+                                                                            'No date',
+                                                                        )}
                                                                     </span>
                                                                     {booking.flight.date && (
                                                                         <>
-                                                                            <span className="text-slate-300">·</span>
+                                                                            <span className="text-slate-300">
+                                                                                ·
+                                                                            </span>
                                                                             <span className="text-slate-500">
-                                                                                {safeFormat(booking.flight.date, 'hh:mm a')}
+                                                                                {safeFormat(
+                                                                                    booking.flight
+                                                                                        .date,
+                                                                                    'hh:mm a',
+                                                                                )}
                                                                             </span>
                                                                         </>
                                                                     )}
                                                                 </div>
-                                                                <StatusBadge status={booking.status} />
-                                                                {booking.status === 'held' && booking.timings.deadline && (
-                                                                    <CountdownTimer deadline={booking.timings.deadline} />
-                                                                )}
-                                                                {booking.canRetry === false && booking.status === 'held' && (
-                                                                    <span className="inline-flex items-center gap-1 rounded-md bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold text-rose-600 ring-1 ring-rose-200/60">
-                                                                        <AlertCircle size={9} /> Max retry
-                                                                    </span>
-                                                                )}
+                                                                <StatusBadge
+                                                                    status={booking.status}
+                                                                />
+                                                                {booking.status === 'held' &&
+                                                                    booking.timings.deadline && (
+                                                                        <CountdownTimer
+                                                                            deadline={
+                                                                                booking.timings
+                                                                                    .deadline
+                                                                            }
+                                                                        />
+                                                                    )}
+                                                                {booking.canRetry === false &&
+                                                                    booking.status === 'held' && (
+                                                                        <span className="inline-flex items-center gap-1 rounded-md bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold text-rose-600 ring-1 ring-rose-200/60">
+                                                                            <AlertCircle size={9} />{' '}
+                                                                            Max retry
+                                                                        </span>
+                                                                    )}
                                                                 <p className="text-[10px] text-slate-400">
-                                                                    Updated: {safeFormat(booking.updatedAt, 'dd MMM, hh:mm a', 'Never')}
+                                                                    Updated:{' '}
+                                                                    {safeFormat(
+                                                                        booking.updatedAt,
+                                                                        'dd MMM, hh:mm a',
+                                                                        'Never',
+                                                                    )}
                                                                 </p>
                                                             </div>
                                                         </td>
@@ -717,11 +844,18 @@ export default function BookingsDashboard() {
                                                         {/* Amount */}
                                                         <td className="px-5 py-4 text-center align-top">
                                                             <p className="text-[13px] font-bold text-slate-900">
-                                                                {booking.amount.currency} {booking.amount.total.toFixed(2)}
+                                                                {booking.amount.currency}{' '}
+                                                                {booking.amount.total.toFixed(2)}
                                                             </p>
                                                             {booking.amount.markup > 0 && (
                                                                 <p className="mt-0.5 inline-flex items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600 ring-1 ring-emerald-200/60">
-                                                                    <ArrowUpRight size={9} />+{booking.amount.markup.toFixed(2)}
+                                                                    <ArrowUpRight size={9} />+
+                                                                    {(
+                                                                        booking.amount.markup -
+                                                                        (booking.amount.markup *
+                                                                            2.9) /
+                                                                            100
+                                                                    ).toFixed(2)}
                                                                 </p>
                                                             )}
                                                         </td>
@@ -730,9 +864,13 @@ export default function BookingsDashboard() {
                                                         <td className="px-5 py-4 text-right align-top">
                                                             <div className="flex items-center justify-end gap-2">
                                                                 {booking.status === 'issued' &&
-                                                                    (booking.actionData.ticketUrl ? (
+                                                                    (booking.actionData
+                                                                        .ticketUrl ? (
                                                                         <a
-                                                                            href={booking.actionData.ticketUrl}
+                                                                            href={
+                                                                                booking.actionData
+                                                                                    .ticketUrl
+                                                                            }
                                                                             target="_blank"
                                                                             rel="noopener noreferrer"
                                                                             className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 transition-all"
@@ -750,7 +888,9 @@ export default function BookingsDashboard() {
                                                                     ))}
 
                                                                 <button
-                                                                    onClick={() => handleViewDetails(booking)}
+                                                                    onClick={() =>
+                                                                        handleViewDetails(booking)
+                                                                    }
                                                                     className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 cursor-pointer transition-all"
                                                                     title="View details"
                                                                 >
@@ -759,9 +899,16 @@ export default function BookingsDashboard() {
 
                                                                 {booking.status === 'held' && (
                                                                     <button
-                                                                        onClick={() => !issueDisabled && openIssueModal(booking)}
+                                                                        onClick={() =>
+                                                                            !issueDisabled &&
+                                                                            openIssueModal(booking)
+                                                                        }
                                                                         disabled={issueDisabled}
-                                                                        title={issueDisabled ? 'Max retry reached' : 'Issue ticket'}
+                                                                        title={
+                                                                            issueDisabled
+                                                                                ? 'Max retry reached'
+                                                                                : 'Issue ticket'
+                                                                        }
                                                                         className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[11px] font-bold shadow-sm transition-all ${
                                                                             issueDisabled
                                                                                 ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
@@ -787,8 +934,11 @@ export default function BookingsDashboard() {
                                 <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3">
                                     <p className="text-[11px] text-slate-400">
                                         Page{' '}
-                                        <span className="font-semibold text-slate-600">{page}</span> of{' '}
-                                        <span className="font-semibold text-slate-600">{totalPages}</span>
+                                        <span className="font-semibold text-slate-600">{page}</span>{' '}
+                                        of{' '}
+                                        <span className="font-semibold text-slate-600">
+                                            {totalPages}
+                                        </span>
                                     </p>
                                     <div className="flex items-center gap-1.5">
                                         <button
@@ -803,7 +953,11 @@ export default function BookingsDashboard() {
                                             const gap = prev && pn - prev > 1;
                                             return (
                                                 <div key={pn} className="flex items-center gap-1.5">
-                                                    {gap && <span className="px-1 text-[11px] text-slate-400">…</span>}
+                                                    {gap && (
+                                                        <span className="px-1 text-[11px] text-slate-400">
+                                                            …
+                                                        </span>
+                                                    )}
                                                     <button
                                                         onClick={() => handlePageChange(pn)}
                                                         className={`flex h-8 w-8 items-center justify-center rounded-lg text-[11px] font-semibold cursor-pointer transition-all ${
@@ -834,40 +988,36 @@ export default function BookingsDashboard() {
 
             {/* ═══════ ISSUE TICKET MODAL ═══════ */}
 
-{selectedBooking && (
-    <IssueTicketModalNew
-        open={issueModalOpen}
-        onClose={closeIssueModal}
-        onSuccess={handleIssueSuccess}
-        bookingId={selectedBooking.id}
-        bookingRef={selectedBooking.bookingRef}
-        pnr={selectedBooking.pnr !== '---' ? selectedBooking.pnr : 'N/A'}
-        finance={{
-            basePrice: String(selectedBooking.amount?.base_amount ?? 0),
-            tax: '0',
-            clientTotal: String(
-                (selectedBooking.amount?.total ?? 0).toFixed(2)
-            ),
-            currency: selectedBooking.amount?.currency || 'GBP',
-            yourMarkup: selectedBooking.amount?.markup ?? 0,
-            duffelTotal: String(
-                (selectedBooking.amount?.base_amount ?? 0).toFixed(2)
-            ),
-        }}
-        paymentSource={
-            selectedBooking.paymentSource
-                ? {
-                      holderName: selectedBooking.paymentSource.holderName || '',
-                      cardNumber: selectedBooking.paymentSource.cardNumber || '',
-                      expiryDate: selectedBooking.paymentSource.expiryDate || '',
-                      cvv: null,
-                      billingAddress: selectedBooking.paymentSource.billingAddress,
-                      zipCode: selectedBooking.paymentSource.zipCode,
-                  }
-                : null
-        }
-    />
-)}
+            {selectedBooking && (
+                <IssueTicketModalNew
+                    open={issueModalOpen}
+                    onClose={closeIssueModal}
+                    onSuccess={handleIssueSuccess}
+                    bookingId={selectedBooking.id}
+                    bookingRef={selectedBooking.bookingRef}
+                    pnr={selectedBooking.pnr !== '---' ? selectedBooking.pnr : 'N/A'}
+                    finance={{
+                        basePrice: String(selectedBooking.amount?.base_amount ?? 0),
+                        tax: '0',
+                        clientTotal: String((selectedBooking.amount?.total ?? 0).toFixed(2)),
+                        currency: selectedBooking.amount?.currency || 'GBP',
+                        yourMarkup: selectedBooking.amount?.markup ?? 0,
+                        duffelTotal: String((selectedBooking.amount?.base_amount ?? 0).toFixed(2)),
+                    }}
+                    paymentSource={
+                        selectedBooking.paymentSource
+                            ? {
+                                  holderName: selectedBooking.paymentSource.holderName || '',
+                                  cardNumber: selectedBooking.paymentSource.cardNumber || '',
+                                  expiryDate: selectedBooking.paymentSource.expiryDate || '',
+                                  cvv: null,
+                                  billingAddress: selectedBooking.paymentSource.billingAddress,
+                                  zipCode: selectedBooking.paymentSource.zipCode,
+                              }
+                            : null
+                    }
+                />
+            )}
         </div>
     );
 }
