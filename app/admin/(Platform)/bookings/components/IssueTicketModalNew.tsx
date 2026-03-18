@@ -61,6 +61,8 @@ export default function IssueTicketModalNew({
     // ── Safe values ──
     const clientAmount = Number(finance?.clientTotal) || 0;
     const duffelAmount = Number(finance?.duffelTotal) || 0;
+    const airlineBaseFare = Number(finance?.basePrice) || 0;
+    const markupAndFees = Number(finance?.yourMarkup) || 0;
     const currency = finance?.currency || "GBP";
     const displayAmount = paymentMethod === "balance" ? duffelAmount : clientAmount;
 
@@ -203,6 +205,8 @@ export default function IssueTicketModalNew({
                                                 bookingId={bookingId}
                                                 amount={clientAmount}
                                                 currency={currency}
+                                                baseFare={airlineBaseFare}
+                                                markup={markupAndFees}
                                                 onSuccess={onSuccess}
                                                 cardInfo={{
                                                     holderName: paymentSource?.holderName,

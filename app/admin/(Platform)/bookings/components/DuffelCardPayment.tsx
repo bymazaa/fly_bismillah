@@ -13,18 +13,26 @@ import {
     MapPin,
     User,
     Calendar,
+    Info,
+    Plane,
+    TrendingUp,
+    Minus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import dynamic from 'next/dynamic';
+
 const DuffelPayments = dynamic(
     () => import('@duffel/components').then((mod) => mod.DuffelPayments),
     { ssr: false },
 );
+
 export interface DuffelCardPaymentProps {
     bookingId: string;
     amount: number;
     currency: string;
+    baseFare?: number;
+    markup?: number;
     onSuccess: () => void;
     onError?: (error: any) => void;
     cardInfo?: {
@@ -50,6 +58,8 @@ export default function DuffelCardPayment({
     bookingId,
     amount,
     currency,
+    baseFare,
+    markup,
     onSuccess,
     onError,
     cardInfo,
@@ -61,7 +71,13 @@ export default function DuffelCardPayment({
     const [isIssuing, setIsIssuing] = useState(false);
     const { copied, copy } = useCopy();
 
-    // ──── Fetch Client Token ────
+    // ── Simple Breakdown ──
+    // markup is already passed from parent
+    // just subtract 2.9% of amount from markup = net profit
+    const totalMarkup = markup ?? 0;
+    const duffelFee = parseFloat((amount * 0.029).toFixed(2));
+    const netProfit = parseFloat((totalMarkup - duffelFee).toFixed(2));
+
     const fetchClientToken = async () => {
         setLoading(true);
         setError(null);
@@ -78,7 +94,9 @@ export default function DuffelCardPayment({
                 throw new Error(res.data.message || 'Failed to create payment session');
             }
         } catch (err: any) {
-            setError(err?.response?.data?.message || err.message || 'Failed to initialize payment');
+            setError(
+                err?.response?.data?.message || err.message || 'Failed to initialize payment',
+            );
             onError?.(err);
         } finally {
             setLoading(false);
@@ -90,13 +108,10 @@ export default function DuffelCardPayment({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [bookingId]);
 
-    // ──── After Payment → Confirm Intent → Issue Ticket ────
     const handleSuccessfulPayment = async () => {
         setIsIssuing(true);
         toast.success('Payment captured! Issuing ticket...');
-
         try {
-            // Step 1: Confirm payment intent with Duffel
             if (paymentIntentId) {
                 try {
                     await axios.post('/api/duffel/confirm-payment', {
@@ -104,20 +119,13 @@ export default function DuffelCardPayment({
                         paymentIntentId,
                     });
                 } catch (confirmErr: any) {
-                    console.warn(
-                        'Payment confirm API failed (may already be confirmed):',
-                        confirmErr?.message,
-                    );
-                    // Non-critical — continue to issue ticket
+                    console.warn('Confirm failed:', confirmErr?.message);
                 }
             }
-
-            // Step 2: Issue ticket
             const res = await axios.post('/api/flights/issue-ticket', {
                 bookingId,
                 paymentMethod: 'card',
             });
-
             if (res.data.success) {
                 toast.success(res.data.message || 'Ticket issued successfully!');
                 onSuccess();
@@ -143,15 +151,9 @@ export default function DuffelCardPayment({
     };
 
     const formatCardNumber = (num: string) => {
-        return (
-            num
-                .replace(/\s/g, '')
-                .match(/.{1,4}/g)
-                ?.join(' ') || num
-        );
+        return num.replace(/\s/g, '').match(/.{1,4}/g)?.join(' ') || num;
     };
 
-    // ═══════════════ LOADING ═══════════════
     if (loading) {
         return (
             <div className="flex flex-col items-center gap-3 py-12">
@@ -164,7 +166,6 @@ export default function DuffelCardPayment({
         );
     }
 
-    // ═══════════════ ERROR ═══════════════
     if (error || !clientToken) {
         return (
             <div className="flex flex-col items-center gap-3 py-10 text-center">
@@ -183,7 +184,6 @@ export default function DuffelCardPayment({
         );
     }
 
-    // ═══════════════ ISSUING ═══════════════
     if (isIssuing) {
         return (
             <div className="flex flex-col items-center gap-3 py-12">
@@ -199,13 +199,12 @@ export default function DuffelCardPayment({
         );
     }
 
-    // ═══════════════ PAYMENT FORM ═══════════════
     const hasCardInfo =
         cardInfo && (cardInfo.cardNumber || cardInfo.holderName || cardInfo.expiryDate);
 
     return (
         <div className="space-y-4">
-            {/* ── Saved Card Details ── */}
+            {/* ── Saved Card ── */}
             {hasCardInfo && (
                 <div className="rounded-xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 shadow-lg">
                     <div className="flex items-center justify-between mb-4">
@@ -214,7 +213,6 @@ export default function DuffelCardPayment({
                         </p>
                         <CreditCard className="h-4 w-4 text-gray-500" />
                     </div>
-
                     {cardInfo?.cardNumber && (
                         <div className="mb-4">
                             <button
@@ -235,56 +233,83 @@ export default function DuffelCardPayment({
                             </button>
                         </div>
                     )}
-
                     <div className="grid grid-cols-3 gap-3">
                         {cardInfo?.holderName && (
                             <div className="space-y-1">
                                 <div className="flex items-center gap-1">
                                     <User className="h-2.5 w-2.5 text-gray-500" />
-                                    <p className="text-[8px] font-semibold uppercase tracking-widest text-gray-500">
-                                        Name
-                                    </p>
+                                    <p className="text-[8px] font-semibold uppercase tracking-widest text-gray-500">Name</p>
                                 </div>
                                 <p className="text-[11px] font-semibold text-gray-200 uppercase truncate">
                                     {cardInfo.holderName.toUpperCase()}
                                 </p>
                             </div>
                         )}
-
                         {cardInfo?.expiryDate && (
                             <div className="space-y-1">
                                 <div className="flex items-center gap-1">
                                     <Calendar className="h-2.5 w-2.5 text-gray-500" />
-                                    <p className="text-[8px] font-semibold uppercase tracking-widest text-gray-500">
-                                        Expires
-                                    </p>
+                                    <p className="text-[8px] font-semibold uppercase tracking-widest text-gray-500">Expires</p>
                                 </div>
-                                <p className="font-mono text-[11px] font-semibold text-gray-200">
-                                    {cardInfo.expiryDate}
-                                </p>
+                                <p className="font-mono text-[11px] font-semibold text-gray-200">{cardInfo.expiryDate}</p>
                             </div>
                         )}
-
                         {cardInfo?.zipCode && (
                             <div className="space-y-1">
                                 <div className="flex items-center gap-1">
                                     <MapPin className="h-2.5 w-2.5 text-gray-500" />
-                                    <p className="text-[8px] font-semibold uppercase tracking-widest text-gray-500">
-                                        Zip Code
-                                    </p>
+                                    <p className="text-[8px] font-semibold uppercase tracking-widest text-gray-500">Zip Code</p>
                                 </div>
-                                <p className="font-mono text-[11px] font-semibold text-gray-200">
-                                    {cardInfo.zipCode}
-                                </p>
+                                <p className="font-mono text-[11px] font-semibold text-gray-200">{cardInfo.zipCode}</p>
                             </div>
                         )}
                     </div>
                 </div>
             )}
 
-            {/* ── Duffel Payment Element ── */}
-            <div className=" border rounded-xl border-gray-200/80 bg-white shadow-md shadow-gray-100/80">
-              
+            {/* ── Duffel Payment Form ── */}
+            <div className="border rounded-xl border-gray-200/80 bg-white shadow-md shadow-gray-100/80">
+                <style>{`
+                    [data-testid="duffel-payments"] button[type="submit"],
+                    div[class*="DuffelPayments"] button[type="submit"],
+                    div[data-duffel] button[type="submit"] {
+                        background: #000000 !important;
+                        background-color: #000000 !important;
+                        color: #ffffff !important;
+                        border: none !important;
+                        border-radius: 10px !important;
+                        font-weight: 600 !important;
+                        font-size: 14px !important;
+                        padding: 12px 24px !important;
+                        min-height: 46px !important;
+                        width: 100% !important;
+                        cursor: pointer !important;
+                        transition: all 0.15s ease !important;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+                    }
+                    [data-testid="duffel-payments"] button[type="submit"]:hover,
+                    div[class*="DuffelPayments"] button[type="submit"]:hover,
+                    div[data-duffel] button[type="submit"]:hover {
+                        background: #1a1a1a !important;
+                        background-color: #1a1a1a !important;
+                    }
+                    [data-testid="duffel-payments"] button[type="submit"]:active,
+                    div[class*="DuffelPayments"] button[type="submit"]:active,
+                    div[data-duffel] button[type="submit"]:active {
+                        transform: scale(0.98) !important;
+                    }
+                    [data-testid="duffel-payments"] button[type="submit"]:disabled,
+                    div[class*="DuffelPayments"] button[type="submit"]:disabled,
+                    div[data-duffel] button[type="submit"]:disabled {
+                        background: #d1d5db !important;
+                        background-color: #d1d5db !important;
+                        color: #9ca3af !important;
+                        cursor: not-allowed !important;
+                        box-shadow: none !important;
+                        transform: none !important;
+                    }
+                `}</style>
+
                 <div className="flex items-center justify-between px-5 pt-4 pb-2">
                     <div className="flex items-center gap-2.5">
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-900 shadow-sm">
@@ -306,21 +331,116 @@ export default function DuffelCardPayment({
                     </div>
                 </div>
 
-                {/* <div className="mx-5 h-px bg-gray-100" /> */}
-
-                <div
-                   className=' p-2 '
-                 
-                >
+                <div className="p-2">
                     <DuffelPayments
                         paymentIntentClientToken={clientToken}
                         onSuccessfulPayment={handleSuccessfulPayment}
                         onFailedPayment={handleFailedPayment}
-                        
                     />
                 </div>
 
+                <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50/50 px-5 py-2.5 rounded-b-xl">
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1 text-[8px] font-semibold text-gray-400 uppercase tracking-wider">
+                            <Lock className="h-2.5 w-2.5" />
+                            256-bit
+                        </div>
+                        <div className="h-3 w-px bg-gray-200" />
+                        <span className="text-[8px] font-semibold text-gray-400 uppercase tracking-wider">PCI DSS</span>
+                        <div className="h-3 w-px bg-gray-200" />
+                        <span className="text-[8px] font-semibold text-gray-400 uppercase tracking-wider">3D Secure</span>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                        <span className="text-[9px] font-medium text-gray-400">{currency}</span>
+                        <span className="text-[14px] font-extrabold text-gray-900 tabular-nums">
+                            {amount.toFixed(2)}
+                        </span>
+                    </div>
+                </div>
             </div>
+
+            {/* ══════════════════════════════
+               MARKUP BREAKDOWN — Below Form
+               ══════════════════════════════ */}
+            {totalMarkup > 0 && (
+                <div className="rounded-xl border border-gray-200/70 bg-white p-4">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-3">
+                        Markup Breakdown
+                    </p>
+
+                    <div className="space-y-2">
+                        {/* Total Markup */}
+                        <div className="flex items-center justify-between">
+                            <span className="text-[11px] text-gray-500">Your Total Markup</span>
+                            <span className="text-[12px] font-bold text-gray-800 tabular-nums">
+                                {currency} {totalMarkup.toFixed(2)}
+                            </span>
+                        </div>
+
+                        <div className="h-px bg-gray-100" />
+
+                        {/* Duffel Fee from markup */}
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                                <Minus className="h-3 w-3 text-amber-500" />
+                                <span className="text-[11px] text-gray-500">Duffel Fee</span>
+                                <span className="text-[8px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded ring-1 ring-amber-200/60">
+                                    2.9%
+                                </span>
+                            </div>
+                            <span className="text-[11px] font-semibold text-amber-600 tabular-nums">
+                                −{currency} {duffelFee.toFixed(2)}
+                            </span>
+                        </div>
+
+                        <div className="h-px bg-gray-200" />
+
+                        {/* Net Profit */}
+                        <div className="flex items-center justify-between pt-0.5">
+                            <div className="flex items-center gap-1.5">
+                                <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
+                                <span className="text-[12px] font-bold text-gray-900">
+                                    Net Profit
+                                </span>
+                            </div>
+                            <span className="text-[13px] font-extrabold text-emerald-600 tabular-nums">
+                                {currency} {netProfit.toFixed(2)}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Visual Bar */}
+                    <div className="mt-3 flex gap-1.5 h-2 rounded-full overflow-hidden bg-gray-100">
+                        <div
+                            className="bg-amber-400 rounded-l-full"
+                            style={{ width: `${(duffelFee / totalMarkup) * 100}%` }}
+                            title={`Duffel: ${currency} ${duffelFee.toFixed(2)}`}
+                        />
+                        <div
+                            className="bg-emerald-500 rounded-r-full"
+                            style={{ width: `${(netProfit / totalMarkup) * 100}%` }}
+                            title={`Profit: ${currency} ${netProfit.toFixed(2)}`}
+                        />
+                    </div>
+                    <div className="flex justify-between mt-1.5">
+                        <span className="text-[8px] text-amber-500 font-semibold">
+                            Duffel 2.9%
+                        </span>
+                        <span className="text-[8px] text-emerald-500 font-semibold">
+                            Profit {((netProfit / amount) * 100).toFixed(1)}%
+                        </span>
+                    </div>
+
+                    {/* Note */}
+                    <div className="flex items-start gap-1.5 mt-3 pt-2.5 border-t border-gray-100">
+                        <Info className="h-3 w-3 text-gray-300 mt-0.5 shrink-0" />
+                        <p className="text-[9px] text-gray-400 leading-relaxed">
+                            Duffel charges <span className="font-semibold text-gray-500">2.9%</span> on card payments.
+                            This is deducted from your markup. Balance payments have no Duffel fee — full markup is profit.
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
