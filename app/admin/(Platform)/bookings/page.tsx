@@ -24,6 +24,7 @@ import {
     Timer,
     Users,
     TrendingUp,
+    Minus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, isValid } from 'date-fns';
@@ -844,19 +845,54 @@ export default function BookingsDashboard() {
 
                                                         {/* Amount */}
                                                         <td className="px-5 py-4 text-center align-top">
-                                                            <p className="text-[13px] font-bold text-slate-900">
+                                                            {/* <p className="text-[13px] font-bold text-slate-900">
                                                                 {booking.amount.currency}{' '}
                                                                 {booking.amount.total.toFixed(2)}
-                                                            </p>
-                                                            {booking.amount.markup > 0 && (
-                                                                <p className="mt-0.5 inline-flex items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600 ring-1 ring-emerald-200/60">
-                                                                    <ArrowUpRight size={9} />+
-                                                                    {(
-                                                                        booking.amount.markup *
-                                                                        (1 - SERVICE_FEE_RATE / 100)
-                                                                    ).toFixed(2)}
-                                                                </p>
-                                                            )}
+                                                            </p> */}
+
+{booking.amount.markup > 0 && (
+  <div className=" rounded-lg border border-slate-100 bg-white/80 backdrop-blur-sm">
+
+    <div className="divide-y divide-slate-100 px-2.5 py-1">
+
+      {/* Net Total */}
+      <div className="flex items-center justify-between py-1.5">
+        <div className="flex items-center gap-1.5">
+          <div className="h-1 w-1 rounded-full bg-emerald-400/60" />
+          <span className="text-[10px] text-slate-400 font-medium">Net Total</span>
+        </div>
+        <span className="text-[10px] font-semibold text-emerald-600/80">
+          ${booking.amount.total.toFixed(2)}
+        </span>
+      </div>
+
+      {/* Payment Fee */}
+      <div className="flex items-center justify-between py-1.5">
+        <div className="flex items-center gap-1.5">
+          <div className="h-1 w-1 rounded-full bg-rose-400/60" />
+          <span className="text-[10px] text-slate-500 font-medium">
+            Fee <span className="text-slate-400">2.9%</span>
+          </span>
+        </div>
+        <span className="text-[10px] font-medium text-rose-400/80">
+          -${(booking.amount.total * 0.029).toFixed(2)}
+        </span>
+      </div>
+
+      {/* Actual Profit */}
+      <div className="flex items-center justify-between py-1.5">
+        <div className="flex items-center gap-1.5">
+          <div className="h-1 w-1 rounded-full bg-blue-400/60" />
+          <span className="text-[10px] text-slate-500 font-semibold">Profit <span className="text-slate-400">5%</span></span>
+        </div>
+        <span className="rounded-full bg-blue-50/80 px-2 py-0.5 text-[10px] font-bold text-blue-500/90">
+          ${(booking.amount.markup - booking.amount.total * 0.029).toFixed(2)}
+        </span>
+      </div>
+
+    </div>
+  </div>
+)}
                                                         </td>
 
                                                         {/* Actions */}

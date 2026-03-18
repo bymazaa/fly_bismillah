@@ -138,6 +138,7 @@ const getBaggageInfo = (slices: any[]) => {
 
 const mapOffer = (offer: any, cabinClass: string, tripType: string) => {
   const priceDetails  = calculatePriceWithMarkup(offer.total_amount, offer.total_currency);
+
   const baggageInfo   = getBaggageInfo(offer.slices);
 
   const itinerary = offer.slices.map((slice: any, index: number) => {

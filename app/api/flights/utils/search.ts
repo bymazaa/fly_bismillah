@@ -1,4 +1,4 @@
-import { COMMISION_RATE, MARKUP_RATE, SERVICE_FEE_RATE } from '@/constant/control';
+import { MARKUP_RATE, SERVICE_FEE_RATE } from '@/constant/control';
 
 // ------------------------------------------------------------------
 // Constants
@@ -27,19 +27,24 @@ export const calculatePriceWithMarkup = (
   }
 
   // ──── Rates ────
-  const SYSTEM_COMMISSION =MARKUP_RATE; // 0.05 = 5%
-  const DUFFEL_FEE =SERVICE_FEE_RATE;  //0.029 = 2.9%
-  const targetAmountToKeep = basePrice * (1 + SYSTEM_COMMISSION); // e.g., $100 base + 5% = $105 total to keep
+  const SYSTEM_COMMISSION = MARKUP_RATE; // e.g., 0.05 = 5%
+  const DUFFEL_FEE = SERVICE_FEE_RATE;   // e.g., 0.029 = 2.9%
 
-  const finalPrice = targetAmountToKeep / (1 - DUFFEL_FEE); // e.g., $105 / (1 - 0.029) ≈ $108.17 total charged to customer
+  // Step 1: target amount (without rounding intermediate)
+  const targetAmountToKeep = basePrice * (1 + SYSTEM_COMMISSION);
 
-  const totalMarkup = finalPrice - basePrice; // e.g., $108.17 - $100 = $8.17 total markup (includes commission + fee)
+  // Step 2: final price charged to customer
+  const finalPriceRaw = targetAmountToKeep / (1 - DUFFEL_FEE);
 
+  // Step 3: total markup
+  const totalMarkupRaw = finalPriceRaw - basePrice;
+
+  // Step 4: round only final output
   return {
     currency: currency || 'USD',
     basePrice: Number(basePrice.toFixed(2)),
-    markup: Number(totalMarkup.toFixed(2)),
-    finalPrice: Number(finalPrice.toFixed(2)),
+    markup: Number(totalMarkupRaw.toFixed(2)),
+    finalPrice: Number(finalPriceRaw.toFixed(2)),
   };
 };
 // ------------------------------------------------------------------
