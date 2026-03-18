@@ -13,8 +13,8 @@ export const FLIGHT_SEARCH_CACHE_DURATION_MS = 10 * 60 * 1000; // 10 Minutes in 
 export const FLIGHT_SEARCH_CACHE_KEY_PREFIX = 'flight_search_';
 
 export const BOOKING_EXPIRY_DURATION_MS = 15 * 60 * 1000; // 15 Minutes in MS
-export const MARKUP_RATE = 5; // percentage of base price
-export const SERVICE_FEE_RATE = 2.9; // percentage of base price
+export const MARKUP_RATE =  0.05; // percentage of base price
+export const SERVICE_FEE_RATE = 0.029; // percentage of base price
 export const COMMISION_RATE = MARKUP_RATE + SERVICE_FEE_RATE; // total percentage
 export const TAX_RATE = 0; // 10% Tax
 export const DISCOUNT_RATE = 0;

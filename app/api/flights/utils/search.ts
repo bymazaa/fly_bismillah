@@ -1,4 +1,4 @@
-import { COMMISION_RATE } from '@/constant/control';
+import { COMMISION_RATE, MARKUP_RATE, SERVICE_FEE_RATE } from '@/constant/control';
 
 // ------------------------------------------------------------------
 // Constants
@@ -22,21 +22,26 @@ export const calculatePriceWithMarkup = (
   }
 
   const basePrice = parseFloat(amount);
-  if (isNaN(basePrice)) {
+  if (isNaN(basePrice) || basePrice <= 0) {
     return { currency: 'USD', basePrice: 0, markup: 0, finalPrice: 0 };
   }
 
-  const markup = basePrice * (COMMISION_RATE / 100);
-  const finalPrice = basePrice + markup;
+  // ──── Rates ────
+  const SYSTEM_COMMISSION =MARKUP_RATE; // 0.05 = 5%
+  const DUFFEL_FEE =SERVICE_FEE_RATE;  //0.029 = 2.9%
+  const targetAmountToKeep = basePrice * (1 + SYSTEM_COMMISSION); // e.g., $100 base + 5% = $105 total to keep
+
+  const finalPrice = targetAmountToKeep / (1 - DUFFEL_FEE); // e.g., $105 / (1 - 0.029) ≈ $108.17 total charged to customer
+
+  const totalMarkup = finalPrice - basePrice; // e.g., $108.17 - $100 = $8.17 total markup (includes commission + fee)
 
   return {
     currency: currency || 'USD',
     basePrice: Number(basePrice.toFixed(2)),
-    markup: Number(markup.toFixed(2)),
+    markup: Number(totalMarkup.toFixed(2)),
     finalPrice: Number(finalPrice.toFixed(2)),
   };
 };
-
 // ------------------------------------------------------------------
 // Rate Limiter
 // In-memory rate limiter per IP — resets after RATE_LIMIT_WINDOW.
