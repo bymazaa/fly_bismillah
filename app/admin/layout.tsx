@@ -38,7 +38,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         ═══════════════════════════════════ */}
                         <main className="flex flex-1 flex-col min-h-[calc(100vh-3.5rem)] overflow-x-hidden z-20">
                             {/* Page Content */}
-                            <div className="flex-1">{children}</div>
+                            <div className="flex-1" >{children}</div>
 
                             {/* Footer */}
                             <footer className="border-t border-slate-200/60 bg-white/50 backdrop-blur-sm px-4 md:px-6 py-3">

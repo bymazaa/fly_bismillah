@@ -154,6 +154,10 @@ export default function DuffelCardPayment({
         return num.replace(/\s/g, '').match(/.{1,4}/g)?.join(' ') || num;
     };
 
+
+
+
+
     if (loading) {
         return (
             <div className="flex flex-col items-center gap-3 py-12">
@@ -269,46 +273,7 @@ export default function DuffelCardPayment({
 
             {/* ── Duffel Payment Form ── */}
             <div className="border rounded-xl border-gray-200/80 bg-white shadow-md shadow-gray-100/80">
-                <style>{`
-                    [data-testid="duffel-payments"] button[type="submit"],
-                    div[class*="DuffelPayments"] button[type="submit"],
-                    div[data-duffel] button[type="submit"] {
-                        background: #000000 !important;
-                        background-color: #000000 !important;
-                        color: #ffffff !important;
-                        border: none !important;
-                        border-radius: 10px !important;
-                        font-weight: 600 !important;
-                        font-size: 14px !important;
-                        padding: 12px 24px !important;
-                        min-height: 46px !important;
-                        width: 100% !important;
-                        cursor: pointer !important;
-                        transition: all 0.15s ease !important;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
-                    }
-                    [data-testid="duffel-payments"] button[type="submit"]:hover,
-                    div[class*="DuffelPayments"] button[type="submit"]:hover,
-                    div[data-duffel] button[type="submit"]:hover {
-                        background: #1a1a1a !important;
-                        background-color: #1a1a1a !important;
-                    }
-                    [data-testid="duffel-payments"] button[type="submit"]:active,
-                    div[class*="DuffelPayments"] button[type="submit"]:active,
-                    div[data-duffel] button[type="submit"]:active {
-                        transform: scale(0.98) !important;
-                    }
-                    [data-testid="duffel-payments"] button[type="submit"]:disabled,
-                    div[class*="DuffelPayments"] button[type="submit"]:disabled,
-                    div[data-duffel] button[type="submit"]:disabled {
-                        background: #d1d5db !important;
-                        background-color: #d1d5db !important;
-                        color: #9ca3af !important;
-                        cursor: not-allowed !important;
-                        box-shadow: none !important;
-                        transform: none !important;
-                    }
-                `}</style>
+             
 
                 <div className="flex items-center justify-between px-5 pt-4 pb-2">
                     <div className="flex items-center gap-2.5">
@@ -331,13 +296,13 @@ export default function DuffelCardPayment({
                     </div>
                 </div>
 
-                <div className="p-2">
-                    <DuffelPayments
-                        paymentIntentClientToken={clientToken}
-                        onSuccessfulPayment={handleSuccessfulPayment}
-                        onFailedPayment={handleFailedPayment}
-                    />
-                </div>
+                  <div className="p-2">
+    <DuffelPayments
+        paymentIntentClientToken={clientToken}
+        onSuccessfulPayment={handleSuccessfulPayment}
+        onFailedPayment={handleFailedPayment}
+    />
+</div>
 
                 <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50/50 px-5 py-2.5 rounded-b-xl">
                     <div className="flex items-center gap-3">

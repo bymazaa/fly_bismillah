@@ -1,15 +1,19 @@
-/* বড় ডিভাইসের জন্য ডিফল্ট স্টাইল */
+
 .card-payment__container {
   width: 330px !important;
-  margin: 0 auto !important; /* মাঝখানে রাখার জন্য */
+  margin: 0 auto !important; 
 }
 
-/* মোবাইল ডিভাইসের জন্য (সর্বোচ্চ ৪8০ পিক্সেল স্ক্রিন) */
+html {
+  font-size: 16px !important;
+}
+
 @media (max-width: 480px) {
   .card-payment__container {
-    /* মোবাইলে উইডথ ১০০% করে দেওয়া হলো যাতে স্ক্রিন থেকে বের না হয়ে যায় */
+  
     width: 100% !important; 
-    min-width: 280px !important; /* যেন একদম বেশি ছোট না হয়ে যায় */
-    max-width: 320px !important; /* মোবাইলে দেখতে সুন্দর লাগার জন্য */
+    min-width: 280px !important; 
+    max-width: 320px !important;
   }
 }
+

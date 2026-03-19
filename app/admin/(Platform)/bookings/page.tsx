@@ -538,7 +538,7 @@ export default function BookingsDashboard() {
     // ══════════════════════════════════════════
 
     return (
-        <div className="min-h-screen w-full bg-white p-4 md:p-6 lg:p-8">
+        <div className="min-h-screen w-full bg-white p-4 md:p-6 lg:p-8 ">
             <div className="mx-auto flex max-w-[1400px] flex-col gap-6">
                 {/* ═══════════════════ HEADER ═══════════════════ */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -720,7 +720,7 @@ export default function BookingsDashboard() {
                                         : 'text-gray-500 hover:text-gray-800 hover:bg-white/60'
                                 }`}
                             >
-                                {s}
+                              <span className='text-[11px] py-2'>  {s}</span>
                             </button>
                         ))}
                     </div>
@@ -838,10 +838,10 @@ export default function BookingsDashboard() {
                                                                         onClick={() =>
                                                                             handleCopy(booking.pnr)
                                                                         }
-                                                                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-gray-900 px-2 py-1 font-mono text-[10px] font-bold text-white hover:bg-gray-700 active:scale-95 transition-all"
+                                                                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-gray-900 px-2 py-1 font-mono !text-[10px] font-bold text-white hover:bg-gray-700 active:scale-95 transition-all"
                                                                         title="Copy PNR"
                                                                     >
-                                                                        {booking.pnr}
+                                                                       <span > {booking.pnr}</span>
                                                                         <Copy
                                                                             size={9}
                                                                             className="text-gray-400"
@@ -1227,6 +1227,8 @@ export default function BookingsDashboard() {
                 </div>
             </div>
 
+
+
             {/* ═══════ ISSUE TICKET MODAL ═══════ */}
             {selectedBooking && (
                 <IssueTicketModalNew
@@ -1266,6 +1268,8 @@ export default function BookingsDashboard() {
                     }
                 />
             )}
+
+
         </div>
     );
 }

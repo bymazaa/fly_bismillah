@@ -408,7 +408,7 @@ const CopyButton = ({ text, label }: { text: string; label: string }) => (
       navigator.clipboard.writeText(text);
       toast.success(`${label} copied`);
     }}
-    className="group inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[12px] font-mono font-semibold text-gray-700 transition-all hover:bg-gray-100 cursor-pointer"
+    className="group inline-flex items-center gap-1.5 rounded-lg px-2 py-1 !text-[12px] font-mono font-semibold text-gray-700 transition-all hover:bg-gray-100 cursor-pointer"
     title="Click to copy"
   >
     {text}
@@ -808,12 +808,12 @@ export default function BookingDetailsPage() {
         )}
 
         {/* ═══════════════════ META BAR ═══════════════════ */}
-        <div className="mb-6 flex flex-wrap items-center gap-2">
-          <div className="inline-flex items-center gap-2 rounded-xl border border-gray-200/70 bg-white px-3 py-2 shadow-2xl shadow-gray-100">
+        <div className="mb-6 flex flex-wrap  items-center gap-2">
+          <div className="inline-flex  items-center gap-2 rounded-xl border border-gray-200/70 bg-white px-3 py-2 shadow-2xl shadow-gray-100">
             <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
               Ref
             </span>
-            <CopyButton text={data.bookingRef} label="Reference" />
+            <CopyButton  text={data.bookingRef} label="Reference" />
           </div>
           <div className="inline-flex items-center gap-2 rounded-xl border border-gray-200/70 bg-white px-3 py-2 shadow-2xl shadow-gray-100">
             <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
@@ -1614,7 +1614,7 @@ export default function BookingDetailsPage() {
                           onClick={() => setShowCard(!showCard)}
                           className="group inline-flex items-center gap-1.5 rounded-full border border-gray-700/50 bg-gray-800/50 px-2 py-1 text-[10px] font-medium transition-colors hover:bg-gray-800 cursor-pointer"
                         >
-                          <span className="text-gray-400 group-hover:text-white transition-colors">
+                          <span className="text-gray-400 text-[12px] group-hover:text-white transition-colors">
                             {showCard ? "Hide" : "Show"}
                           </span>
                           {showCard ? (
@@ -1753,9 +1753,9 @@ export default function BookingDetailsPage() {
                       <Button
                         onClick={() => setIssueModalOpen(true)}
                         disabled={data.canRetry === false}
-                        className="h-11 w-full cursor-pointer rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 text-[13px] font-bold text-white shadow-2xl shadow-gray-100 transition-all hover:from-gray-900 hover:to-gray-950 hover:shadow-md active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="h-11 w-full  cursor-pointer rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 text-[13px] font-bold text-white shadow-2xl shadow-gray-100 transition-all hover:from-gray-900 hover:to-gray-950 hover:shadow-md active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
                       >
-                        <span className="flex items-center gap-2">
+                        <span className="flex items-center gap-2 text-[13px]">
                           <TicketCheck className="h-4 w-4" />
                           Issue Ticket
                           <ChevronRight className="h-4 w-4" />
