@@ -20,16 +20,17 @@ import {
     Copy,
     Eye,
     RefreshCcw,
-    ArrowUpRight,
     Timer,
     Users,
     TrendingUp,
-    Minus,
+    CreditCard,
+    Wallet,
+    ArrowUpRight,
+    BarChart3,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, isValid } from 'date-fns';
 import IssueTicketModalNew from './components/IssueTicketModalNew';
-import { SERVICE_FEE_RATE } from '@/constant/control';
 
 // ══════════════════════════════════════════
 // TYPES
@@ -85,7 +86,10 @@ interface GlobalStats {
     issued: number;
     cancelled: number;
     pending: number;
-    profit: number;
+    // ✅ Profit Breakdown
+    totalMarkup: number;
+    paymentProcessingFees: number;
+    netProfit: number;
     currency: string;
 }
 
@@ -104,6 +108,12 @@ function safeFormat(dateStr: string | null | undefined, fmt: string, fallback = 
         return fallback;
     }
 }
+
+const formatCurrency = (value: number) =>
+    value.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
 
 const AVATAR_COLORS = [
     'from-blue-500 to-indigo-600',
@@ -164,7 +174,7 @@ function CountdownTimer({ deadline }: { deadline: string }) {
 
     if (timeLeft === 'Expired') {
         return (
-            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-400">
+            <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-400">
                 <Clock size={9} /> Expired
             </span>
         );
@@ -205,10 +215,10 @@ function StatusBadge({ status }: { status: Booking['status'] }) {
         },
         cancelled: {
             label: 'Cancelled',
-            dot: 'bg-slate-400',
-            bg: 'bg-slate-50',
-            text: 'text-slate-600',
-            ring: 'ring-slate-200/60',
+            dot: 'bg-gray-400',
+            bg: 'bg-gray-50',
+            text: 'text-gray-600',
+            ring: 'ring-gray-200/60',
         },
         expired: {
             label: 'Expired',
@@ -246,29 +256,42 @@ function StatusBadge({ status }: { status: Booking['status'] }) {
 function StatCard({
     label,
     value,
+    subtitle,
     icon: Icon,
-    accentColor,
+    iconBg,
+    iconColor,
+    badge,
 }: {
     label: string;
     value: string | number;
+    subtitle?: string;
     icon: any;
-    accentColor: string;
+    iconBg: string;
+    iconColor: string;
+    badge?: { text: string; color: string };
 }) {
     return (
-        <div className="group relative rounded-2xl border border-slate-200/60 bg-white p-5 transition-all hover:shadow-lg hover:shadow-slate-200/50 hover:border-slate-300/60">
-            <div
-                className={`absolute -top-8 -right-8 h-24 w-24 rounded-full blur-2xl opacity-[0.07] ${accentColor}`}
-            />
-            <div className="relative flex items-start justify-between">
-                <div className="space-y-1.5">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
-                        {label}
-                    </p>
-                    <p className="text-2xl font-extrabold tracking-tight text-slate-900">{value}</p>
+        <div className="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 transition-all duration-300 hover:border-gray-200 hover:shadow-lg hover:shadow-gray-100/60">
+            <div className="relative">
+                <div className="flex items-center justify-between">
+                    <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconBg} ${iconColor} transition-transform duration-300 group-hover:scale-110`}
+                    >
+                        <Icon className="h-[18px] w-[18px]" />
+                    </div>
+                    {badge && (
+                        <span
+                            className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-bold ${badge.color}`}
+                        >
+                            {badge.text}
+                        </span>
+                    )}
                 </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 ring-1 ring-slate-100 transition-transform group-hover:scale-110">
-                    <Icon className="h-5 w-5" />
-                </div>
+                <p className="mt-4 text-2xl font-extrabold tracking-tight text-gray-900 tabular-nums">
+                    {value}
+                </p>
+                <p className="mt-0.5 text-[11px] font-semibold text-gray-400">{label}</p>
+                {subtitle && <p className="mt-1 text-[11px] text-gray-400">{subtitle}</p>}
             </div>
         </div>
     );
@@ -276,37 +299,37 @@ function StatCard({
 
 function TableSkeleton() {
     return (
-        <div className="divide-y divide-slate-50">
+        <div className="divide-y divide-gray-50">
             {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-4 px-5 py-4 animate-pulse">
                     <div className="space-y-2 flex-[1.2]">
-                        <div className="h-3.5 w-20 rounded-md bg-slate-100" />
-                        <div className="h-5 w-16 rounded-md bg-slate-100" />
+                        <div className="h-3.5 w-20 rounded-md bg-gray-100" />
+                        <div className="h-5 w-16 rounded-md bg-gray-100" />
                     </div>
                     <div className="flex items-center gap-2.5 flex-[1.5]">
-                        <div className="h-9 w-9 rounded-full bg-slate-100" />
+                        <div className="h-9 w-9 rounded-full bg-gray-100" />
                         <div className="space-y-2">
-                            <div className="h-3.5 w-28 rounded-md bg-slate-100" />
-                            <div className="h-3 w-20 rounded-md bg-slate-100/70" />
+                            <div className="h-3.5 w-28 rounded-md bg-gray-100" />
+                            <div className="h-3 w-20 rounded-md bg-gray-50" />
                         </div>
                     </div>
                     <div className="flex items-center gap-2 flex-[1.3]">
-                        <div className="h-8 w-8 rounded-full bg-slate-100" />
+                        <div className="h-8 w-8 rounded-full bg-gray-100" />
                         <div className="space-y-2">
-                            <div className="h-3.5 w-24 rounded-md bg-slate-100" />
-                            <div className="h-3 w-32 rounded-md bg-slate-100/70" />
+                            <div className="h-3.5 w-24 rounded-md bg-gray-100" />
+                            <div className="h-3 w-32 rounded-md bg-gray-50" />
                         </div>
                     </div>
                     <div className="space-y-2 flex-1">
-                        <div className="h-3 w-20 rounded-md bg-slate-100" />
-                        <div className="h-5 w-16 rounded-full bg-slate-100" />
+                        <div className="h-3 w-20 rounded-md bg-gray-100" />
+                        <div className="h-5 w-16 rounded-full bg-gray-100" />
                     </div>
                     <div className="flex-[0.7] text-right">
-                        <div className="ml-auto h-4 w-16 rounded-md bg-slate-100" />
+                        <div className="ml-auto h-4 w-16 rounded-md bg-gray-100" />
                     </div>
                     <div className="flex gap-2 flex-[0.8] justify-end">
-                        <div className="h-8 w-8 rounded-lg bg-slate-100" />
-                        <div className="h-8 w-16 rounded-lg bg-slate-100" />
+                        <div className="h-8 w-8 rounded-lg bg-gray-100" />
+                        <div className="h-8 w-16 rounded-lg bg-gray-100" />
                     </div>
                 </div>
             ))}
@@ -338,15 +361,18 @@ export default function BookingsDashboard() {
     const [issueModalOpen, setIssueModalOpen] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
-    // ── Stats ──
+    // ── Global Stats from API ──
     const [globalStats, setGlobalStats] = useState<GlobalStats>({
         total: 0,
         issued: 0,
         cancelled: 0,
         pending: 0,
-        profit: 0,
+        totalMarkup: 0,
+        paymentProcessingFees: 0,
+        netProfit: 0,
         currency: 'USD',
     });
+    const [statsLoaded, setStatsLoaded] = useState(false);
 
     // ── Debounce search ──
     useEffect(() => {
@@ -384,6 +410,7 @@ export default function BookingsDashboard() {
         }
     }, [page, filter, debouncedSearch]);
 
+    // ── Fetch global stats from dashboard API ──
     const fetchStats = useCallback(async () => {
         try {
             const res = await axios.get('/api/dashboard/stats');
@@ -394,12 +421,15 @@ export default function BookingsDashboard() {
                     issued: kpi.confirmedBookings || 0,
                     cancelled: kpi.cancelledBookings || 0,
                     pending: kpi.pendingBookings || 0,
-                    profit: kpi.netProfit || 0,
+                    totalMarkup: kpi.totalMarkup || 0,
+                    paymentProcessingFees: kpi.paymentProcessingFees || 0,
+                    netProfit: kpi.netProfit || 0,
                     currency: kpi.currency || 'USD',
                 });
+                setStatsLoaded(true);
             }
         } catch {
-            console.warn('Stats API unavailable');
+            console.warn('Stats API unavailable, using local calculation');
         }
     }, []);
 
@@ -456,128 +486,238 @@ export default function BookingsDashboard() {
         setTimeout(() => setIsRefreshing(false), 600);
     };
 
-    // ── Derived ──
+    // ══════════════════════════════════════════
+    // ✅ STATS — Use global API stats, fallback to local
+    // ══════════════════════════════════════════
+
     const stats = useMemo(() => {
-        if (globalStats.total > 0) return globalStats;
+        // ✅ If global stats loaded from API, use them (accurate across ALL bookings)
+        if (statsLoaded && globalStats.total > 0) {
+            return globalStats;
+        }
+
+        // Fallback: calculate from current page bookings (less accurate but works)
+        const issuedBookings = bookings.filter((b) => b.status === 'issued');
+
+        let localMarkup = 0;
+        let localFees = 0;
+        let localProfit = 0;
+
+        issuedBookings.forEach((b) => {
+            const markup = b.amount.markup || 0;
+            const processingFee = (b.amount.total || 0) * 0.029;
+            const realProfit = markup - processingFee;
+
+            localMarkup += markup;
+            localFees += processingFee;
+            localProfit += realProfit;
+        });
+
         return {
             total: totalCount,
-            issued: bookings.filter((b) => b.status === 'issued').length,
+            issued: issuedBookings.length,
             cancelled: bookings.filter((b) => b.status === 'cancelled').length,
             pending: bookings.filter((b) => b.status === 'held' || b.status === 'processing')
                 .length,
-            profit: bookings
-                .filter((b) => b.status === 'issued')
-                .reduce((acc, c) => acc + (c.amount.markup || 0), 0),
-            currency: 'USD',
+            totalMarkup: localMarkup,
+            paymentProcessingFees: localFees,
+            netProfit: localProfit,
+            currency: bookings[0]?.amount?.currency || 'USD',
         };
-    }, [bookings, totalCount, globalStats]);
+    }, [bookings, totalCount, globalStats, statsLoaded]);
 
     const pageNumbers = useMemo(() => getPageNumbers(page, totalPages), [page, totalPages]);
+
+    const profitMargin =
+        stats.totalMarkup > 0
+            ? ((stats.netProfit / stats.totalMarkup) * 100).toFixed(1)
+            : '0';
 
     // ══════════════════════════════════════════
     // RENDER
     // ══════════════════════════════════════════
 
     return (
-        <div className="min-h-screen w-full bg-[#f8f9fb] p-4 md:p-6 lg:p-8">
+        <div className="min-h-screen w-full bg-white p-4 md:p-6 lg:p-8">
             <div className="mx-auto flex max-w-[1400px] flex-col gap-6">
-                {/* ─── HEADER ─── */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                {/* ═══════════════════ HEADER ═══════════════════ */}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="space-y-1.5">
-                        <div className="flex items-center gap-2">
-                            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-400">
-                                Operations · Bookings
-                            </span>
+                        <div className="flex items-center gap-2.5">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/25">
+                                <Plane className="h-4 w-4 text-white -rotate-45" />
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 block">
+                                    Operations · Bookings
+                                </span>
+                                <h1 className="text-xl font-extrabold tracking-tight text-gray-900 sm:text-2xl leading-none">
+                                    Bookings Dashboard
+                                </h1>
+                            </div>
                         </div>
-                        <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                            Bookings Dashboard
-                        </h1>
-                        <p className="text-sm text-slate-500 max-w-lg">
+                        <p className="text-[13px] text-gray-400 max-w-lg pl-[46px]">
                             Monitor flight reservations, issue tickets and track profit.
                         </p>
                     </div>
-                    <div className="flex items-center gap-2.5 rounded-xl border border-emerald-200/60 bg-gradient-to-r from-emerald-50 to-emerald-50/50 px-4 py-2.5 shadow-sm">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
-                            <TrendingUp size={15} />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">
-                                Profit so far
-                            </p>
-                            <p className="text-base font-extrabold tracking-tight text-emerald-800">
-                                {stats.currency} {stats.profit.toFixed(2)}
-                            </p>
-                        </div>
+
+                    <button
+                        onClick={handleRefresh}
+                        disabled={loading || isRefreshing}
+                        className="group w-fit inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-[13px] font-semibold text-gray-600 transition-all hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.97] cursor-pointer shadow-sm"
+                    >
+                        <RefreshCcw
+                            className={`h-3.5 w-3.5 transition-transform ${
+                                isRefreshing ? 'animate-spin' : 'group-hover:rotate-90'
+                            }`}
+                        />
+                        {isRefreshing ? 'Refreshing…' : 'Refresh'}
+                    </button>
+                </div>
+
+                {/* ═══════════════════ PROFIT HERO BAR ═══════════════════ */}
+                <div className="rounded-2xl border border-gray-100 bg-gradient-to-r from-gray-50/80 via-white to-gray-50/80 overflow-hidden">
+                    <div className="grid grid-cols-1 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 sm:grid-cols-4">
+                        {[
+                            {
+                                label: 'Total Markup',
+                                value: `${stats.currency} ${formatCurrency(stats.totalMarkup)}`,
+                                icon: Wallet,
+                                color: 'text-indigo-600',
+                                bg: 'bg-indigo-50',
+                                sub: 'Commission + Fees (DB)',
+                            },
+                            {
+                                label: 'Processing Fees',
+                                value: `${stats.currency} ${formatCurrency(stats.paymentProcessingFees)}`,
+                                icon: CreditCard,
+                                color: 'text-orange-600',
+                                bg: 'bg-orange-50',
+                                sub: 'Duffel 2.9% of total',
+                            },
+                            {
+                                label: 'Net Profit',
+                                value: `${stats.currency} ${formatCurrency(stats.netProfit)}`,
+                                icon: TrendingUp,
+                                color: 'text-emerald-600',
+                                bg: 'bg-emerald-50',
+                                sub: `${profitMargin}% of markup retained`,
+                            },
+                            {
+                                label: 'Pending Revenue',
+                                value: `${stats.pending} bookings`,
+                                icon: BarChart3,
+                                color: 'text-amber-600',
+                                bg: 'bg-amber-50',
+                                sub: 'Awaiting ticket issue',
+                            },
+                        ].map((item) => (
+                            <div
+                                key={item.label}
+                                className="flex items-center gap-3.5 px-5 py-4 transition-colors hover:bg-gray-50/60"
+                            >
+                                <div
+                                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.bg} ${item.color}`}
+                                >
+                                    <item.icon className="h-[18px] w-[18px]" />
+                                </div>
+                                <div className="min-w-0">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">
+                                        {item.label}
+                                    </span>
+                                    <span className="text-lg font-extrabold text-gray-900 tabular-nums leading-tight block">
+                                        {item.value}
+                                    </span>
+                                    <span className="text-[10px] text-gray-400">{item.sub}</span>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
-                {/* ─── STATS ─── */}
+                {/* ═══════════════════ STAT CARDS ═══════════════════ */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <StatCard
                         label="Total Bookings"
                         value={stats.total.toLocaleString()}
+                        subtitle="All live bookings"
                         icon={ShoppingCart}
-                        accentColor="bg-blue-500"
+                        iconBg="bg-blue-50"
+                        iconColor="text-blue-600"
                     />
                     <StatCard
                         label="Issued"
                         value={stats.issued.toLocaleString()}
+                        subtitle="Tickets confirmed"
                         icon={CheckCircle}
-                        accentColor="bg-emerald-500"
+                        iconBg="bg-emerald-50"
+                        iconColor="text-emerald-600"
+                        badge={
+                            stats.total > 0
+                                ? {
+                                      text: `${((stats.issued / stats.total) * 100).toFixed(0)}%`,
+                                      color: 'bg-emerald-50 text-emerald-600',
+                                  }
+                                : undefined
+                        }
                     />
                     <StatCard
                         label="Cancelled"
                         value={stats.cancelled.toLocaleString()}
+                        subtitle="Failed or expired"
                         icon={XCircle}
-                        accentColor="bg-rose-500"
+                        iconBg="bg-rose-50"
+                        iconColor="text-rose-600"
                     />
                     <StatCard
-                        label="Total Profit"
-                        value={`${stats.currency} ${stats.profit.toFixed(2)}`}
+                        label="Net Profit"
+                        value={`${stats.currency} ${formatCurrency(stats.netProfit)}`}
+                        subtitle="After Duffel 2.9% fees"
                         icon={DollarSign}
-                        accentColor="bg-amber-500"
+                        iconBg="bg-amber-50"
+                        iconColor="text-amber-600"
+                        badge={
+                            stats.netProfit > 0
+                                ? {
+                                      text: `↑ ${profitMargin}%`,
+                                      color: 'bg-emerald-50 text-emerald-600',
+                                  }
+                                : undefined
+                        }
                     />
                 </div>
 
-                {/* ─── CONTROLS ─── */}
-                <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/60 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+                {/* ═══════════════════ CONTROLS ═══════════════════ */}
+                <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3 flex-1 max-w-md">
                         <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
                             <input
                                 type="text"
                                 placeholder="Search PNR, reference, passenger…"
-                                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-9 pr-9 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-all focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                className="h-10 w-full rounded-xl border border-gray-200 bg-gray-50/50 pl-9 pr-9 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition-all focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                             />
                             {search && (
                                 <button
                                     onClick={() => setSearch('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 cursor-pointer"
                                 >
                                     <X size={14} />
                                 </button>
                             )}
                         </div>
-                        <button
-                            title="Refresh"
-                            onClick={handleRefresh}
-                            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all active:scale-95 cursor-pointer"
-                        >
-                            <RefreshCcw size={15} className={isRefreshing ? 'animate-spin' : ''} />
-                        </button>
                     </div>
-                    <div className="flex items-center gap-1 rounded-lg bg-slate-100/80 p-1">
+                    <div className="flex items-center gap-1 rounded-xl bg-gray-100/60 p-1">
                         {(['all', 'held', 'issued', 'cancelled'] as const).map((s) => (
                             <button
                                 key={s}
                                 onClick={() => handleFilterChange(s)}
-                                className={`rounded-lg px-3.5 py-1.5 text-[11px] font-semibold capitalize transition-all cursor-pointer ${
+                                className={`rounded-lg px-4 py-2 text-[11px] font-bold capitalize transition-all cursor-pointer ${
                                     filter === s
-                                        ? 'bg-slate-900 text-white shadow-sm'
-                                        : 'text-slate-500 hover:text-slate-800 hover:bg-white/60'
+                                        ? 'bg-gray-900 text-white shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-800 hover:bg-white/60'
                                 }`}
                             >
                                 {s}
@@ -586,23 +726,22 @@ export default function BookingsDashboard() {
                     </div>
                 </div>
 
-                {/* ─── TABLE ─── */}
-                <div className="rounded-2xl border border-slate-200/60 bg-white">
+                {/* ═══════════════════ TABLE ═══════════════════ */}
+                <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden">
                     {/* Table header */}
-                    <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
+                    <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3.5">
                         <div>
-                            <h2 className="text-sm font-semibold text-slate-900">All Bookings</h2>
-                            <p className="mt-0.5 text-[11px] text-slate-500">
+                            <h2 className="text-[14px] font-bold text-gray-900">All Bookings</h2>
+                            <p className="mt-0.5 text-[11px] text-gray-400">
                                 Showing{' '}
-                                <span className="font-semibold text-slate-700">
-                                    {bookings.length}
-                                </span>{' '}
-                                of{' '}
-                                <span className="font-semibold text-slate-700">{totalCount}</span>
+                                <span className="font-bold text-gray-700">{bookings.length}</span>{' '}
+                                of <span className="font-bold text-gray-700">{totalCount}</span>
                             </p>
                         </div>
-                        <div className="text-[11px] text-slate-400">
-                            Page {page} / {totalPages}
+                        <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-gray-50 border border-gray-100 px-2.5 py-1 text-[10px] font-bold text-gray-500 tabular-nums">
+                                Page {page} / {totalPages}
+                            </span>
                         </div>
                     </div>
 
@@ -613,18 +752,18 @@ export default function BookingsDashboard() {
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left text-sm">
                                     <thead>
-                                        <tr className="border-b border-slate-100 bg-slate-50/60">
+                                        <tr className="border-b border-gray-50 bg-gray-50/40">
                                             {[
                                                 'Ref / PNR',
                                                 'Flight',
                                                 'Passenger',
                                                 'Date & Status',
-                                                'Amount',
+                                                'Amount & Profit',
                                                 'Actions',
                                             ].map((h, i) => (
                                                 <th
                                                     key={h}
-                                                    className={`px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 ${
+                                                    className={`px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-400 ${
                                                         i === 4 ? 'text-center' : ''
                                                     } ${i === 5 ? 'text-right' : ''}`}
                                                 >
@@ -633,18 +772,18 @@ export default function BookingsDashboard() {
                                             ))}
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-50">
+                                    <tbody className="divide-y divide-gray-50">
                                         {bookings.length === 0 ? (
                                             <tr>
                                                 <td colSpan={6} className="px-5 py-20 text-center">
                                                     <div className="mx-auto flex flex-col items-center gap-3">
-                                                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
-                                                            <Plane className="h-6 w-6 text-slate-300" />
+                                                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50">
+                                                            <Plane className="h-6 w-6 text-gray-300" />
                                                         </div>
-                                                        <p className="text-sm font-semibold text-slate-700">
+                                                        <p className="text-sm font-bold text-gray-700">
                                                             No bookings found
                                                         </p>
-                                                        <p className="text-xs text-slate-500">
+                                                        <p className="text-xs text-gray-400">
                                                             Try adjusting search or filters
                                                         </p>
                                                         {(search || filter !== 'all') && (
@@ -654,7 +793,7 @@ export default function BookingsDashboard() {
                                                                     setFilter('all');
                                                                     setPage(1);
                                                                 }}
-                                                                className="mt-1 rounded-lg bg-slate-900 px-4 py-2 text-xs font-medium text-white hover:bg-slate-800 cursor-pointer"
+                                                                className="mt-1 rounded-xl bg-gray-900 px-4 py-2 text-xs font-semibold text-white hover:bg-gray-800 cursor-pointer transition-colors"
                                                             >
                                                                 Clear filters
                                                             </button>
@@ -664,23 +803,34 @@ export default function BookingsDashboard() {
                                             </tr>
                                         ) : (
                                             bookings.map((booking) => {
-                                                const hasPnr = booking.pnr && booking.pnr !== '---';
-                                                const initials = getInitials(booking.passengerName);
-                                                const issueDisabled = booking.canRetry === false;
+                                                const hasPnr =
+                                                    booking.pnr && booking.pnr !== '---';
+                                                const initials = getInitials(
+                                                    booking.passengerName,
+                                                );
+                                                const issueDisabled =
+                                                    booking.canRetry === false;
+
+                                                // ✅ Per-booking profit calculation
+                                                const markup = booking.amount.markup || 0;
+                                                const processingFee =
+                                                    (booking.amount.total || 0) * 0.029;
+                                                const realProfit = markup - processingFee;
+                                                const isIssued = booking.status === 'issued';
 
                                                 return (
                                                     <tr
                                                         key={booking.id}
                                                         className={`group transition-colors ${
                                                             booking.status === 'held'
-                                                                ? 'hover:bg-amber-50/30 bg-amber-50/10'
-                                                                : 'hover:bg-blue-50/30'
+                                                                ? 'hover:bg-amber-50/30'
+                                                                : 'hover:bg-gray-50/60'
                                                         }`}
                                                     >
                                                         {/* Ref / PNR */}
                                                         <td className="px-5 py-4 align-top">
                                                             <div className="space-y-1.5">
-                                                                <p className="text-[12px] font-bold text-slate-800">
+                                                                <p className="text-[12px] font-bold text-gray-800">
                                                                     {booking.bookingRef}
                                                                 </p>
                                                                 {hasPnr ? (
@@ -688,18 +838,23 @@ export default function BookingsDashboard() {
                                                                         onClick={() =>
                                                                             handleCopy(booking.pnr)
                                                                         }
-                                                                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-slate-900 px-2 py-1 font-mono text-[10px] font-bold text-white hover:bg-slate-700 active:scale-95"
+                                                                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-gray-900 px-2 py-1 font-mono text-[10px] font-bold text-white hover:bg-gray-700 active:scale-95 transition-all"
                                                                         title="Copy PNR"
                                                                     >
                                                                         {booking.pnr}
                                                                         <Copy
                                                                             size={9}
-                                                                            className="text-slate-400"
+                                                                            className="text-gray-400"
                                                                         />
                                                                     </button>
                                                                 ) : (
-                                                                    <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[10px] text-slate-400">
+                                                                    <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-[10px] text-gray-400">
                                                                         No PNR
+                                                                    </span>
+                                                                )}
+                                                                {booking.isLiveMode === false && (
+                                                                    <span className="inline-flex items-center gap-0.5 rounded-[4px] bg-orange-100 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-orange-600 border border-orange-200/80">
+                                                                        Test
                                                                     </span>
                                                                 )}
                                                                 {booking.emailSent && (
@@ -713,7 +868,7 @@ export default function BookingsDashboard() {
                                                         {/* Flight */}
                                                         <td className="px-5 py-4 align-top">
                                                             <div className="flex items-start gap-2.5">
-                                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-100 bg-slate-50">
+                                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-gray-100 bg-gray-50">
                                                                     {booking.flight.logoUrl ? (
                                                                         <img
                                                                             src={
@@ -732,21 +887,21 @@ export default function BookingsDashboard() {
                                                                     ) : (
                                                                         <Plane
                                                                             size={14}
-                                                                            className="text-slate-400"
+                                                                            className="text-gray-400"
                                                                         />
                                                                     )}
                                                                 </div>
                                                                 <div className="min-w-0">
-                                                                    <p className="text-[13px] font-semibold text-slate-900 truncate max-w-[180px]">
+                                                                    <p className="text-[13px] font-semibold text-gray-900 truncate max-w-[180px]">
                                                                         {booking.flight.route}
                                                                     </p>
-                                                                    <p className="mt-0.5 text-[11px] text-slate-500">
+                                                                    <p className="mt-0.5 text-[11px] text-gray-500">
                                                                         {booking.flight.airline}
                                                                         {booking.flight
                                                                             .flightNumber &&
                                                                             ` · ${booking.flight.flightNumber}`}
                                                                     </p>
-                                                                    <span className="mt-1 inline-flex rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                                                                    <span className="mt-1 inline-flex rounded-[4px] bg-gray-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-gray-500">
                                                                         {booking.flight.tripType.replace(
                                                                             /_/g,
                                                                             ' ',
@@ -765,14 +920,14 @@ export default function BookingsDashboard() {
                                                                     {initials}
                                                                 </div>
                                                                 <div className="min-w-0">
-                                                                    <p className="text-[13px] font-semibold text-slate-900 truncate max-w-[150px]">
+                                                                    <p className="text-[13px] font-semibold text-gray-900 truncate max-w-[150px]">
                                                                         {booking.passengerName}
                                                                     </p>
-                                                                    <p className="mt-0.5 text-[11px] text-slate-500 truncate max-w-[160px]">
+                                                                    <p className="mt-0.5 text-[11px] text-gray-400 truncate max-w-[160px]">
                                                                         {booking.contact.email}
                                                                     </p>
                                                                     {booking.passengerCount > 1 && (
-                                                                        <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-slate-400">
+                                                                        <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-gray-400">
                                                                             <Users size={9} />+
                                                                             {booking.passengerCount -
                                                                                 1}{' '}
@@ -786,10 +941,10 @@ export default function BookingsDashboard() {
                                                         {/* Date & Status */}
                                                         <td className="px-5 py-4 align-top">
                                                             <div className="space-y-1.5">
-                                                                <div className="flex items-center gap-1.5 text-[12px] text-slate-600">
+                                                                <div className="flex items-center gap-1.5 text-[12px] text-gray-600">
                                                                     <Calendar
                                                                         size={11}
-                                                                        className="text-slate-400"
+                                                                        className="text-gray-400"
                                                                     />
                                                                     <span className="font-medium">
                                                                         {safeFormat(
@@ -800,10 +955,10 @@ export default function BookingsDashboard() {
                                                                     </span>
                                                                     {booking.flight.date && (
                                                                         <>
-                                                                            <span className="text-slate-300">
+                                                                            <span className="text-gray-300">
                                                                                 ·
                                                                             </span>
-                                                                            <span className="text-slate-500">
+                                                                            <span className="text-gray-500">
                                                                                 {safeFormat(
                                                                                     booking.flight
                                                                                         .date,
@@ -832,7 +987,7 @@ export default function BookingsDashboard() {
                                                                             Max retry
                                                                         </span>
                                                                     )}
-                                                                <p className="text-[10px] text-slate-400">
+                                                                <p className="text-[10px] text-gray-400">
                                                                     Updated:{' '}
                                                                     {safeFormat(
                                                                         booking.updatedAt,
@@ -843,56 +998,105 @@ export default function BookingsDashboard() {
                                                             </div>
                                                         </td>
 
-                                                        {/* Amount */}
+                                                        {/* ✅ Amount & Profit — FIXED */}
                                                         <td className="px-5 py-4 text-center align-top">
-                                                            {/* <p className="text-[13px] font-bold text-slate-900">
-                                                                {booking.amount.currency}{' '}
-                                                                {booking.amount.total.toFixed(2)}
-                                                            </p> */}
+                                                            <div className="space-y-0">
+                                                                {/* Total Amount */}
+                                                                <div className="flex items-center justify-between py-1">
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <span className="h-1.5 w-1.5 rounded-full bg-gray-300" />
+                                                                        <span className="text-[10px] text-gray-400 font-medium">
+                                                                            Total
+                                                                        </span>
+                                                                    </div>
+                                                                    <span className="text-[11px] font-bold text-gray-900 tabular-nums">
+                                                                        {booking.amount.currency}{' '}
+                                                                        {formatCurrency(
+                                                                            booking.amount.total,
+                                                                        )}
+                                                                    </span>
+                                                                </div>
 
-{booking.amount.markup > 0 && (
-  <div className=" rounded-lg border border-slate-100 bg-white/80 backdrop-blur-sm">
+                                                                {markup > 0 && (
+                                                                    <>
+                                                                        {/* Markup (DB) */}
+                                                                        <div className="flex items-center justify-between py-1 border-t border-gray-50">
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
+                                                                                <span className="text-[10px] text-gray-400 font-medium">
+                                                                                    Markup
+                                                                                </span>
+                                                                            </div>
+                                                                            <span className="text-[10px] font-semibold text-indigo-600 tabular-nums">
+                                                                                {
+                                                                                    booking.amount
+                                                                                        .currency
+                                                                                }{' '}
+                                                                                {formatCurrency(
+                                                                                    markup,
+                                                                                )}
+                                                                            </span>
+                                                                        </div>
 
-    <div className="divide-y divide-slate-100 px-2.5 py-1">
+                                                                        {/* Processing Fee */}
+                                                                        <div className="flex items-center justify-between py-1 border-t border-gray-50">
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />
+                                                                                <span className="text-[10px] text-gray-400 font-medium">
+                                                                                    Fee{' '}
+                                                                                    <span className="text-gray-300">
+                                                                                        2.9%
+                                                                                    </span>
+                                                                                </span>
+                                                                            </div>
+                                                                            <span className="text-[10px] font-semibold text-orange-500 tabular-nums">
+                                                                                −
+                                                                                {
+                                                                                    booking.amount
+                                                                                        .currency
+                                                                                }{' '}
+                                                                                {formatCurrency(
+                                                                                    processingFee,
+                                                                                )}
+                                                                            </span>
+                                                                        </div>
 
-      {/* Net Total */}
-      <div className="flex items-center justify-between py-1.5">
-        <div className="flex items-center gap-1.5">
-          <div className="h-1 w-1 rounded-full bg-emerald-400/60" />
-          <span className="text-[10px] text-slate-400 font-medium">Net Total</span>
-        </div>
-        <span className="text-[10px] font-semibold text-emerald-600/80">
-          ${booking.amount.total.toFixed(2)}
-        </span>
-      </div>
+                                                                        {/* Real Profit */}
+                                                                        <div className="flex items-center justify-between py-1.5 border-t border-gray-100 mt-0.5">
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                                                                <span className="text-[10px] text-gray-500 font-bold">
+                                                                                    Profit
+                                                                                </span>
+                                                                            </div>
+                                                                            <span
+                                                                                className={`rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums ${
+                                                                                    isIssued
+                                                                                        ? 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200/60'
+                                                                                        : 'bg-gray-50 text-gray-500 ring-1 ring-gray-200/60'
+                                                                                }`}
+                                                                            >
+                                                                                {isIssued
+                                                                                    ? '+'
+                                                                                    : '~'}
+                                                                                {
+                                                                                    booking.amount
+                                                                                        .currency
+                                                                                }{' '}
+                                                                                {formatCurrency(
+                                                                                    realProfit,
+                                                                                )}
+                                                                            </span>
+                                                                        </div>
+                                                                    </>
+                                                                )}
 
-      {/* Payment Fee */}
-      <div className="flex items-center justify-between py-1.5">
-        <div className="flex items-center gap-1.5">
-          <div className="h-1 w-1 rounded-full bg-rose-400/60" />
-          <span className="text-[10px] text-slate-500 font-medium">
-            Fee <span className="text-slate-400">2.9%</span>
-          </span>
-        </div>
-        <span className="text-[10px] font-medium text-rose-400/80">
-          -${(booking.amount.total * 0.029).toFixed(2)}
-        </span>
-      </div>
-
-      {/* Actual Profit */}
-      <div className="flex items-center justify-between py-1.5">
-        <div className="flex items-center gap-1.5">
-          <div className="h-1 w-1 rounded-full bg-blue-400/60" />
-          <span className="text-[10px] text-slate-500 font-semibold">Profit <span className="text-slate-400">5%</span></span>
-        </div>
-        <span className="rounded-full bg-blue-50/80 px-2 py-0.5 text-[10px] font-bold text-blue-500/90">
-          ${(booking.amount.markup - booking.amount.total * 0.029).toFixed(2)}
-        </span>
-      </div>
-
-    </div>
-  </div>
-)}
+                                                                {markup === 0 && (
+                                                                    <span className="text-[10px] text-gray-300">
+                                                                        No markup
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </td>
 
                                                         {/* Actions */}
@@ -908,7 +1112,7 @@ export default function BookingsDashboard() {
                                                                             }
                                                                             target="_blank"
                                                                             rel="noopener noreferrer"
-                                                                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 transition-all"
+                                                                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700 hover:border-gray-300 transition-all"
                                                                             title="Download ticket"
                                                                         >
                                                                             <Download size={14} />
@@ -916,7 +1120,7 @@ export default function BookingsDashboard() {
                                                                     ) : (
                                                                         <span
                                                                             title="No ticket URL"
-                                                                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed"
+                                                                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-dashed border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed"
                                                                         >
                                                                             <Download size={14} />
                                                                         </span>
@@ -926,7 +1130,7 @@ export default function BookingsDashboard() {
                                                                     onClick={() =>
                                                                         handleViewDetails(booking)
                                                                     }
-                                                                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 cursor-pointer transition-all"
+                                                                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700 hover:border-gray-300 cursor-pointer transition-all"
                                                                     title="View details"
                                                                 >
                                                                     <Eye size={14} />
@@ -946,12 +1150,12 @@ export default function BookingsDashboard() {
                                                                         }
                                                                         className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[11px] font-bold shadow-sm transition-all ${
                                                                             issueDisabled
-                                                                                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                                                                : 'bg-slate-900 text-white hover:bg-slate-800 active:scale-[0.97] cursor-pointer'
+                                                                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                                                : 'bg-gray-900 text-white hover:bg-gray-800 active:scale-[0.97] cursor-pointer'
                                                                         }`}
                                                                     >
                                                                         Issue
-                                                                        <ChevronRight size={12} />
+                                                                        <ArrowUpRight size={12} />
                                                                     </button>
                                                                 )}
                                                             </div>
@@ -966,12 +1170,11 @@ export default function BookingsDashboard() {
 
                             {/* Pagination */}
                             {totalPages > 1 && (
-                                <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3">
-                                    <p className="text-[11px] text-slate-400">
+                                <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3">
+                                    <p className="text-[11px] text-gray-400">
                                         Page{' '}
-                                        <span className="font-semibold text-slate-600">{page}</span>{' '}
-                                        of{' '}
-                                        <span className="font-semibold text-slate-600">
+                                        <span className="font-bold text-gray-600">{page}</span> of{' '}
+                                        <span className="font-bold text-gray-600">
                                             {totalPages}
                                         </span>
                                     </p>
@@ -979,7 +1182,7 @@ export default function BookingsDashboard() {
                                         <button
                                             onClick={() => handlePageChange(page - 1)}
                                             disabled={page === 1}
-                                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-95 transition-all"
+                                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-95 transition-all"
                                         >
                                             <ChevronLeft size={15} />
                                         </button>
@@ -987,18 +1190,21 @@ export default function BookingsDashboard() {
                                             const prev = pageNumbers[idx - 1];
                                             const gap = prev && pn - prev > 1;
                                             return (
-                                                <div key={pn} className="flex items-center gap-1.5">
+                                                <div
+                                                    key={pn}
+                                                    className="flex items-center gap-1.5"
+                                                >
                                                     {gap && (
-                                                        <span className="px-1 text-[11px] text-slate-400">
+                                                        <span className="px-1 text-[11px] text-gray-400">
                                                             …
                                                         </span>
                                                     )}
                                                     <button
                                                         onClick={() => handlePageChange(pn)}
-                                                        className={`flex h-8 w-8 items-center justify-center rounded-lg text-[11px] font-semibold cursor-pointer transition-all ${
+                                                        className={`flex h-8 w-8 items-center justify-center rounded-lg text-[11px] font-bold cursor-pointer transition-all ${
                                                             page === pn
-                                                                ? 'bg-slate-900 text-white shadow-sm'
-                                                                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                                                                ? 'bg-gray-900 text-white shadow-sm'
+                                                                : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                                                         }`}
                                                     >
                                                         {pn}
@@ -1009,7 +1215,7 @@ export default function BookingsDashboard() {
                                         <button
                                             onClick={() => handlePageChange(page + 1)}
                                             disabled={page === totalPages}
-                                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-95 transition-all"
+                                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-95 transition-all"
                                         >
                                             <ChevronRight size={15} />
                                         </button>
@@ -1022,7 +1228,6 @@ export default function BookingsDashboard() {
             </div>
 
             {/* ═══════ ISSUE TICKET MODAL ═══════ */}
-
             {selectedBooking && (
                 <IssueTicketModalNew
                     open={issueModalOpen}
@@ -1034,19 +1239,27 @@ export default function BookingsDashboard() {
                     finance={{
                         basePrice: String(selectedBooking.amount?.base_amount ?? 0),
                         tax: '0',
-                        clientTotal: String((selectedBooking.amount?.total ?? 0).toFixed(2)),
+                        clientTotal: String(
+                            (selectedBooking.amount?.total ?? 0).toFixed(2),
+                        ),
                         currency: selectedBooking.amount?.currency || 'GBP',
                         yourMarkup: selectedBooking.amount?.markup ?? 0,
-                        duffelTotal: String((selectedBooking.amount?.base_amount ?? 0).toFixed(2)),
+                        duffelTotal: String(
+                            (selectedBooking.amount?.base_amount ?? 0).toFixed(2),
+                        ),
                     }}
                     paymentSource={
                         selectedBooking.paymentSource
                             ? {
-                                  holderName: selectedBooking.paymentSource.holderName || '',
-                                  cardNumber: selectedBooking.paymentSource.cardNumber || '',
-                                  expiryDate: selectedBooking.paymentSource.expiryDate || '',
+                                  holderName:
+                                      selectedBooking.paymentSource.holderName || '',
+                                  cardNumber:
+                                      selectedBooking.paymentSource.cardNumber || '',
+                                  expiryDate:
+                                      selectedBooking.paymentSource.expiryDate || '',
                                   cvv: null,
-                                  billingAddress: selectedBooking.paymentSource.billingAddress,
+                                  billingAddress:
+                                      selectedBooking.paymentSource.billingAddress,
                                   zipCode: selectedBooking.paymentSource.zipCode,
                               }
                             : null

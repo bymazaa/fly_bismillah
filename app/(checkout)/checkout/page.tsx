@@ -165,7 +165,7 @@ const FlightSegmentCard = ({ seg }: { seg: {
                             <span className="w-1 h-1 bg-gray-300 rounded-full" />
                             <span className="text-[10px] text-gray-400">{seg.departure.airport}</span>
                             {seg.departure.terminal && (
-                                <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">T{seg.departure.terminal}</span>
+                                <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">Teminal {seg.departure.terminal}</span>
                             )}
                         </div>
                     </div>
@@ -204,7 +204,7 @@ const FlightSegmentCard = ({ seg }: { seg: {
                         <span className="w-1 h-1 bg-gray-300 rounded-full" />
                         <span className="text-[10px] text-gray-400">{seg.arrival.airport}</span>
                         {seg.arrival.terminal && (
-                            <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">T{seg.arrival.terminal}</span>
+                            <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">Terminal {seg.arrival.terminal}</span>
                         )}
                     </div>
                 </div>
