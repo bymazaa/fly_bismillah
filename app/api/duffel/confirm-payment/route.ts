@@ -32,6 +32,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // ── Duplicate Payment Guard ──
+    if (booking.status === "processing" && booking.paymentStatus === "captured") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Payment already completed for this booking with card payment please use duffel balance for ticket issuance",
+        },
+        { status: 409 }
+      );
+    }
+
+
+
     if (!booking.duffelOrderId) {
       return NextResponse.json(
         { success: false, message: "No Duffel order linked" },
@@ -46,7 +59,7 @@ export async function POST(req: NextRequest) {
     });
 
     try {
-      await duffel.paymentIntents.confirm(paymentIntentId);
+      await duffel.paymentIntents.confirm(paymentIntentId); // No need to pass orderId here, Duffel identifies intent by ID
 
       console.log("✅ Payment intent confirmed:", paymentIntentId);
     } catch (confirmErr: any) {
@@ -70,6 +83,7 @@ export async function POST(req: NextRequest) {
     // ── Update Booking ──
     await Booking.findByIdAndUpdate(bookingId, {
       $set: {
+        status: "processing",         // ✅ added
         paymentStatus: "captured",
         duffelPaymentIntentId: paymentIntentId,
         clientPayWith: "card",

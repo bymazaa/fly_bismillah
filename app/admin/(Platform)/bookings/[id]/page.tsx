@@ -1739,7 +1739,7 @@ export default function BookingDetailsPage() {
                         </div>
                       )}
                     </>
-                  ) : data.status === "held" ? (
+                  ) : ["held","processing"].includes(data.status) ? (
                     <>
                       {data.canRetry === false && (
                         <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50/50 px-3 py-2 text-[11px] text-rose-600 mb-2">
@@ -2295,6 +2295,8 @@ export default function BookingDetailsPage() {
 
       {/* ═══════════════════ ISSUE TICKET MODAL (EXTRACTED) ═══════════════════ */}
       <IssueTicketModalNew
+      status={data.status}
+      paymentStatus={data.paymentStatus}
         open={issueModalOpen}
         onClose={() => setIssueModalOpen(false)}
         onSuccess={() => {

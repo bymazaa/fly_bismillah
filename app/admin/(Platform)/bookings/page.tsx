@@ -93,7 +93,7 @@ interface GlobalStats {
     currency: string;
 }
 
-type FilterType = 'all' | 'held' | 'issued' | 'cancelled';
+type FilterType = 'all' | 'held' | 'issued' | 'cancelled' | 'expired' | 'processing' | 'failed';
 
 // ══════════════════════════════════════════
 // UTILS
@@ -710,7 +710,7 @@ export default function BookingsDashboard() {
                         </div>
                     </div>
                     <div className="flex items-center gap-1 rounded-xl bg-gray-100/60 p-1">
-                        {(['all', 'held', 'issued', 'cancelled'] as const).map((s) => (
+                        {(['all', 'held', 'issued', 'cancelled',"expired"] as const).map((s) => (
                             <button
                                 key={s}
                                 onClick={() => handleFilterChange(s)}
@@ -1136,7 +1136,7 @@ export default function BookingsDashboard() {
                                                                     <Eye size={14} />
                                                                 </button>
 
-                                                                {booking.status === 'held' && (
+                                                                {["held","processing"].includes(booking.status) && (
                                                                     <button
                                                                         onClick={() =>
                                                                             !issueDisabled &&
@@ -1232,6 +1232,8 @@ export default function BookingsDashboard() {
             {/* ═══════ ISSUE TICKET MODAL ═══════ */}
             {selectedBooking && (
                 <IssueTicketModalNew
+                status={selectedBooking.status}
+                paymentStatus={selectedBooking.paymentStatus}
                     open={issueModalOpen}
                     onClose={closeIssueModal}
                     onSuccess={handleIssueSuccess}

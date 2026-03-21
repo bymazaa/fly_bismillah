@@ -128,7 +128,7 @@ export default function DuffelCardPayment({
             });
             if (res.data.success) {
                 toast.success(res.data.message || 'Ticket issued successfully!');
-                onSuccess();
+              
             } else {
                 throw new Error(res.data.message || 'Ticket issuance failed');
             }
@@ -141,6 +141,7 @@ export default function DuffelCardPayment({
             onError?.(err);
         } finally {
             setIsIssuing(false);
+            onSuccess()
         }
     };
 

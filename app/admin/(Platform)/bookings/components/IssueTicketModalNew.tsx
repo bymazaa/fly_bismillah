@@ -9,6 +9,7 @@ import {
     AlertTriangle,
     Sparkles,
     ShieldCheck,
+    CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
@@ -44,6 +45,9 @@ export interface IssueTicketModalProps {
     pnr: string;
     finance: FinanceInfo;
     paymentSource?: PaymentSourceInfo | null;
+    // ✅ নতুন props
+    status?: string;
+    paymentStatus?: string;
 }
 
 export default function IssueTicketModalNew({
@@ -54,6 +58,8 @@ export default function IssueTicketModalNew({
     pnr,
     finance,
     paymentSource,
+    status,
+    paymentStatus,
 }: IssueTicketModalProps) {
     const [paymentMethod, setPaymentMethod] = useState<"card" | "balance">("card");
     const [isProcessing, setIsProcessing] = useState(false);
@@ -65,6 +71,10 @@ export default function IssueTicketModalNew({
     const markupAndFees = Number(finance?.yourMarkup) || 0;
     const currency = finance?.currency || "GBP";
     const displayAmount = paymentMethod === "balance" ? duffelAmount : clientAmount;
+
+    // ✅ Guard: payment already captured + processing
+    const isAlreadyPaid =
+        status === "processing" && paymentStatus === "captured";
 
     const handleIssueWithBalance = async () => {
         if (duffelAmount <= 0) {
@@ -95,7 +105,6 @@ export default function IssueTicketModalNew({
 
     if (!open) return null;
 
-    // ── Validate finance data ──
     const hasValidCardAmount = clientAmount > 0 && currency;
     const hasValidBalanceAmount = duffelAmount > 0 && currency;
 
@@ -150,6 +159,23 @@ export default function IssueTicketModalNew({
                         </div>
                     </div>
 
+                    {/* ✅ Already Paid Alert — card section এর বদলে দেখাবে */}
+                    {isAlreadyPaid && (
+                        <div className="flex gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500 mt-0.5" />
+                            <div className="space-y-1">
+                                <p className="text-[13px] font-bold text-emerald-800">
+                                    Payment Already Captured
+                                </p>
+                                <p className="text-[11px] leading-relaxed text-emerald-700">
+                                    Card payment was successfully captured in a previous attempt.
+                                    You can now issue the ticket using the balance option below,
+                                    or the ticket may still be generating in the background.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     {/* ══════ Payment Methods ══════ */}
                     <div className="space-y-3">
 
@@ -161,7 +187,7 @@ export default function IssueTicketModalNew({
                                     ? "border-sky-500/60 bg-sky-50/20"
                                     : "border-gray-200 bg-white hover:border-gray-300 cursor-pointer"
                             )}
-                            onClick={() => paymentMethod !== "card" && setPaymentMethod("card")}
+                            onClick={() => !isAlreadyPaid && paymentMethod !== "card" && setPaymentMethod("card")}
                         >
                             <div className="p-4">
                                 <div className="flex items-start justify-between gap-3 mb-1">
@@ -174,12 +200,15 @@ export default function IssueTicketModalNew({
                                                     : "border-gray-300"
                                             )}
                                         >
-                                            {paymentMethod === "card" && (
+                                            {paymentMethod === "card" && !isAlreadyPaid && (
                                                 <div className="h-2 w-2 rounded-full bg-sky-600" />
                                             )}
                                         </div>
                                         <div>
-                                            <p className="text-[13px] font-bold text-gray-900">
+                                            <p className={cn(
+                                                "text-[13px] font-bold",
+                                                isAlreadyPaid ? "text-gray-400" : "text-gray-900"
+                                            )}>
                                                 Duffel Card Payment
                                             </p>
                                             <p className="text-[11px] text-gray-500 mt-0.5">
@@ -187,12 +216,19 @@ export default function IssueTicketModalNew({
                                             </p>
                                         </div>
                                     </div>
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-900 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white shrink-0">
-                                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                                    <span className={cn(
+                                        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold tracking-wide text-white shrink-0",
+                                        isAlreadyPaid ? "bg-gray-400" : "bg-gray-900"
+                                    )}>
+                                        <span className={cn(
+                                            "h-1.5 w-1.5 rounded-full",
+                                            isAlreadyPaid ? "bg-gray-300" : "bg-emerald-400"
+                                        )} />
                                         DUFFEL
                                     </span>
                                 </div>
 
+                                {/* ✅ isAlreadyPaid হলে DuffelCardPayment hide, alert দেখাবে */}
                                 {paymentMethod === "card" && (
                                     <div
                                         className="mt-3 pt-3 border-t border-gray-100"
@@ -200,7 +236,21 @@ export default function IssueTicketModalNew({
                                         onMouseDown={(e) => e.stopPropagation()}
                                         onPointerDown={(e) => e.stopPropagation()}
                                     >
-                                        {hasValidCardAmount ? (
+                                        {isAlreadyPaid ? (
+                                            <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                                                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
+                                                <p className="text-[11px] leading-relaxed text-amber-800">
+                                                    Card payment already captured. Switch to{" "}
+                                                    <button
+                                                        onClick={() => setPaymentMethod("balance")}
+                                                        className="font-bold underline underline-offset-2 cursor-pointer"
+                                                    >
+                                                        Duffel Balance
+                                                    </button>{" "}
+                                                    to issue the ticket.
+                                                </p>
+                                            </div>
+                                        ) : hasValidCardAmount ? (
                                             <DuffelCardPayment
                                                 bookingId={bookingId}
                                                 amount={clientAmount}
@@ -222,7 +272,7 @@ export default function IssueTicketModalNew({
                                             <div className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-xs text-red-600">
                                                 <AlertTriangle className="h-4 w-4 shrink-0" />
                                                 <span>
-                                                    Invalid payment data (amount: {clientAmount}, currency: {currency || 'missing'}).
+                                                    Invalid payment data (amount: {clientAmount}, currency: {currency || "missing"}).
                                                     Please go back and try again.
                                                 </span>
                                             </div>
@@ -314,7 +364,7 @@ export default function IssueTicketModalNew({
                         </Button>
                     )}
 
-                    {paymentMethod === "card" && (
+                    {paymentMethod === "card" && !isAlreadyPaid && (
                         <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
                             <ShieldCheck className="h-3 w-3 text-emerald-500" />
                             <span>Use the form above to pay</span>
