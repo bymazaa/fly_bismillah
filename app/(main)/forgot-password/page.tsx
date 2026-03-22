@@ -164,7 +164,7 @@ export default function ForgotPasswordPage() {
                 <div className="flex items-start gap-3 bg-gradient-to-r from-amber-50/60 to-orange-50/40 border border-amber-100/50 rounded-2xl p-4 text-left mb-6">
                   <Info className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
                   <p className="text-[12px] text-slate-500 leading-relaxed">
-                    The link will expire in <span className="font-bold">30 minutes</span>.
+                    The link will expire in <span className="font-bold">15 minutes</span>.
                     If 2FA was enabled, it will be disabled after reset.
                   </p>
                 </div>

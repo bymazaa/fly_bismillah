@@ -1,8 +1,6 @@
 // lib/auth.ts
-
 import { jwtVerify, SignJWT } from 'jose';
 import { cookies } from 'next/headers';
-
 import { IJwtPayload } from '@/types/admin';
 import dbConnect from '@/connection/db';
 import Admin, { AdminDocument } from '@/models/Admin.model';
