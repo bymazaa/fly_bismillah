@@ -76,7 +76,7 @@ const DestinationDetails = () => {
       try {
         setIsLoading(true);
         const destResponse = await axios.get(
-          `/api/dashboard/destinations/${id}`
+          `/api/public/destinations/${id}`
         );
         const destinationData = destResponse.data.data || destResponse.data;
         setDest(destinationData);
@@ -140,22 +140,27 @@ const DestinationDetails = () => {
           </div>
         </div>
 
-        {/* Hero skeleton */}
-        <div className={`${layout.container} mt-5`}>
-          <div className="w-full h-[420px] md:h-[520px] bg-gray-100 rounded-3xl animate-pulse" />
+        {/* Text Header Skeleton */}
+        <div className="w-full bg-rose-50/20 py-16">
+          <div className={`${layout.container} space-y-6`}>
+            <div className="flex gap-3">
+              <div className="h-8 w-32 bg-gray-100 rounded-full animate-pulse" />
+              <div className="h-8 w-32 bg-gray-100 rounded-full animate-pulse" />
+            </div>
+            <div className="h-16 w-3/4 bg-gray-100 rounded-2xl animate-pulse" />
+            <div className="flex gap-4">
+               <div className="h-10 w-48 bg-gray-100 rounded-xl animate-pulse" />
+               <div className="h-10 w-40 bg-gray-100 rounded-xl animate-pulse" />
+            </div>
+          </div>
         </div>
 
         {/* Content skeleton */}
-        <div
-          className={`${layout.container} mt-10 grid grid-cols-1 lg:grid-cols-3 gap-12`}
-        >
+        <div className={`${layout.container} mt-10 grid grid-cols-1 lg:grid-cols-3 gap-12`}>
           <div className="lg:col-span-2 space-y-6">
             <div className="flex gap-4">
               {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="h-20 flex-1 bg-gray-100 rounded-2xl animate-pulse"
-                />
+                <div key={i} className="h-20 flex-1 bg-gray-100 rounded-2xl animate-pulse" />
               ))}
             </div>
             <div className="h-48 bg-gray-50 rounded-3xl animate-pulse" />
@@ -224,9 +229,7 @@ const DestinationDetails = () => {
     <main className="bg-white min-h-screen pb-24">
       {/* ═══════════ 1. Top Nav ═══════════ */}
       <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-100/60">
-        <div
-          className={`${layout.container} py-3.5 flex justify-between items-center`}
-        >
+        <div className={`${layout.container} py-3.5 flex justify-between items-center`}>
           <Link
             href="/destinations"
             className="inline-flex items-center gap-2.5 text-sm text-gray-500 hover:text-gray-900 font-semibold transition-colors cursor-pointer group"
@@ -248,71 +251,40 @@ const DestinationDetails = () => {
         </div>
       </div>
 
-      {/* ═══════════ 2. Hero ═══════════ */}
-      <div className={`${layout.container} mt-5`}>
-        <div className="relative w-full h-[400px] md:h-[520px] rounded-3xl overflow-hidden group">
-          {/* Main Image */}
-          {dest.gallery && dest.gallery.length > 0 ? (
-            <Image
-              src={dest.gallery[0]}
-              alt={dest.name}
-              fill
-              quality={100}
-              className="object-cover group-hover:scale-[1.03] transition-transform duration-[1.5s] ease-out"
-              priority
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300" />
-          )}
-
-          {/* Gradients */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/5" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent" />
-
-          {/* Badges top-left */}
-          <div className="absolute top-5 left-5 flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-md border border-white/20 text-white px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
-              <HiOutlineSparkles className="text-xs" />
+      {/* ═══════════ 2. Text Header Section (Replaced Image) ═══════════ */}
+      <div className="w-full bg-gradient-to-b from-rose-50/40 to-white border-b border-gray-100/50 pt-12 pb-16 md:pt-16 md:pb-20">
+        <div className={`${layout.container} flex flex-col items-start`}>
+          {/* Top Badges */}
+          <div className="flex flex-wrap items-center gap-3 mb-6">
+            <span className="inline-flex items-center gap-1.5 bg-rose-100/50 border border-rose-200 text-rose-600 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider">
+              <HiOutlineSparkles className="text-[14px]" />
               {dest.country}
             </span>
 
-            <span className="inline-flex items-center gap-1.5 bg-yellow-500/20 backdrop-blur-md border border-yellow-400/30 text-yellow-200 px-3 py-1.5 rounded-full text-xs font-bold">
-              <FaStar className="text-yellow-400 text-[10px]" />
+            <span className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200/60 text-amber-600 px-4 py-2 rounded-full text-xs font-bold">
+              <FaStar className="text-amber-500 text-[14px]" />
               {dest.rating || 'N/A'}
-              <span className="text-yellow-300/60 font-medium">
-                ({dest.reviews || 0})
+              <span className="text-amber-600/70 font-medium">
+                ({dest.reviews || 0} reviews)
               </span>
             </span>
           </div>
 
-          {/* Gallery count badge top-right */}
-          {dest.gallery && dest.gallery.length > 1 && (
-            <button
-              onClick={() => openLightbox(0)}
-              className="absolute top-5 right-5 inline-flex items-center gap-2 bg-white/15 backdrop-blur-md border border-white/20 text-white px-3.5 py-1.5 rounded-full text-xs font-bold cursor-pointer hover:bg-white/25 transition-all"
-            >
-              <FaCamera className="text-[10px]" />
-              {dest.gallery.length} Photos
-            </button>
-          )}
+          {/* Title */}
+          <h1 className="text-4xl md:text-5xl lg:text-[4rem] font-extrabold text-gray-900 mb-8 leading-[1.15] tracking-tight max-w-4xl">
+            Explore <span className="text-rose-500">{cityName}</span>
+          </h1>
 
-          {/* Bottom content */}
-          <div className="absolute bottom-0 left-0 w-full p-6 md:p-10">
-            <h1 className="text-3xl md:text-5xl lg:text-[3.5rem] font-extrabold text-white mb-3 leading-[1.1] tracking-tight max-w-3xl">
-              Explore{' '}
-              <span className="text-rose-400">{cityName}</span>
-            </h1>
+          {/* Quick Meta Info */}
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2.5 text-gray-700 text-[15px] font-semibold bg-white shadow-sm px-5 py-3 rounded-2xl border border-gray-100">
+              <FaMapMarkerAlt className="text-rose-500" />
+              <span>{dest.name}</span>
+            </div>
 
-            <div className="flex flex-wrap items-center gap-4">
-              <span className="flex items-center gap-2 text-white/80 text-sm font-medium">
-                <FaMapMarkerAlt className="text-rose-400 text-xs" />
-                {dest.name}
-              </span>
-              <span className="w-1 h-1 rounded-full bg-white/30" />
-              <span className="flex items-center gap-2 text-white/80 text-sm font-medium">
-                <FaSuitcaseRolling className="text-rose-400 text-xs" />
-                Top Destination
-              </span>
+            <div className="flex items-center gap-2.5 text-gray-700 text-[15px] font-semibold bg-white shadow-sm px-5 py-3 rounded-2xl border border-gray-100">
+              <FaSuitcaseRolling className="text-rose-500" />
+              <span>Top Destination</span>
             </div>
           </div>
         </div>
