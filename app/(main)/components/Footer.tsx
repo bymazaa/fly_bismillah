@@ -190,11 +190,11 @@ const Footer = () => {
             <span className="text-rose-500 text-xs">♥</span>
             by
             <Link
-              href="https://mazaharul.site"
+              href="https://bymaza.me"
               target="_blank"
               className="text-gray-400 hover:text-white font-semibold transition-colors"
             >
-              MazaSoft
+              bymaza.me
             </Link>
           </p>
 
